@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MentIQ - Auth</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-wrapper {
+            width: 100%;
+            max-width: 900px;
+            position: relative;
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 137, 123, 0.3);
+            overflow: hidden;
+            display: flex;
+            min-height: 700px;
+            height: auto;
+        }
+
+        .form-container {
+            flex: 1;
+            padding: 50px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .form-container.login {
+            background: linear-gradient(135deg, #ffffff 0%, #e0f7fa 100%);
+            left: 0;
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .form-container.register {
+            background: linear-gradient(135deg, #ffffff 0%, #e0f7fa 100%);
+            left: 100%;
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .auth-wrapper.show-register .form-container.login {
+            left: -100%;
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .auth-wrapper.show-register .form-container.register {
+            left: 0;
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .hero-icon {
+            font-size: 50px;
+            margin-bottom: 15px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .auth-header h1 {
+            font-size: 32px;
+            color: #00695c;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .auth-subtitle {
+            color: #00897b;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            color: #00695c;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 12px 15px;
+            border: 2px solid #e0f7fa;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #00897b;
+            box-shadow: 0 0 0 3px rgba(0, 137, 123, 0.1);
+        }
+
+        .auth-form button {
+            padding: 13px 30px;
+            background: linear-gradient(135deg, #00897b 0%, #00695c 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 16px;
+            margin-top: 10px;
+            box-shadow: 0 4px 12px rgba(0, 137, 123, 0.2);
+        }
+
+        .auth-form button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 137, 123, 0.3);
+        }
+
+        .toggle-auth {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-top: 15px;
+        }
+
+        .toggle-auth button {
+            background: none;
+            border: none;
+            color: #00897b;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: underline;
+            padding: 0;
+            margin: 0;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .toggle-auth button:hover {
+            color: #00695c;
+        }
+
+        .doctor-fields {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+
+        .doctor-fields.show {
+            max-height: 200px;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border: 2px solid #00897b;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .theme-toggle:hover {
+            background: #00897b;
+            transform: rotate(180deg);
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        }
+
+        body.dark-mode .auth-card {
+            background: #1e1e1e;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        body.dark-mode .form-container.login {
+            background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
+        }
+
+        body.dark-mode .form-container.register {
+            background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
+        }
+
+        body.dark-mode .auth-header h1,
+        body.dark-mode .form-group label {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .auth-subtitle {
+            color: #b2ebf2;
+        }
+
+        body.dark-mode .form-group input,
+        body.dark-mode .form-group select {
+            background: #2a2a2a;
+            color: #e0e0e0;
+            border-color: #444;
+        }
+
+        body.dark-mode .form-group input:focus,
+        body.dark-mode .form-group select:focus {
+            border-color: #00897b;
+            box-shadow: 0 0 0 3px rgba(0, 137, 123, 0.2);
+        }
+
+        body.dark-mode .toggle-auth {
+            color: #b0b0b0;
+        }
+
+        body.dark-mode .theme-toggle {
+            background: #2a2a2a;
+            border-color: #00897b;
+            color: #00897b;
+        }
+
+        body.dark-mode .theme-toggle:hover {
+            background: #00897b;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .auth-card {
+                height: auto;
+                min-height: 600px;
+            }
+
+            .form-container {
+                position: relative;
+                width: 100%;
+                height: auto;
+                left: 0 !important;
+                padding: 40px 25px;
+            }
+
+            .auth-wrapper.show-register .form-container.login {
+                display: none;
+            }
+
+            .form-container.register {
+                display: none;
+            }
+
+            .auth-wrapper.show-register .form-container.register {
+                display: flex;
+            }
+
+            .auth-header h1 {
+                font-size: 28px;
+            }
+
+            .theme-toggle {
+                position: absolute;
+                top: 15px;
+                right: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
+
+    <div class="auth-wrapper" id="authWrapper">
+        <div class="auth-card">
+            <!-- LOGIN FORM -->
+            <div class="form-container login">
+                <div class="auth-header">
+                    <div class="hero-icon">🧠</div>
+                    <h1>Welcome Back</h1>
+                    <p class="auth-subtitle">Sign in to continue your mental health journey</p>
+                </div>
+
+                <form class="auth-form" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="loginEmail">Email</label>
+                        <input type="email" id="loginEmail" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="loginUserType">Login as:</label>
+                        <select id="loginUserType">
+                            <option value="patient">Patient</option>
+                            <option value="doctor">Doctor</option>
+                        </select>
+                    </div>
+
+                    <button type="submit">Login</button>
+                </form>
+
+                <div class="toggle-auth">
+                    Don't have an account? <button type="button" onclick="toggleRegister()">Sign up</button>
+                </div>
+            </div>
+
+            <!-- REGISTER FORM -->
+            <div class="form-container register">
+                <div class="auth-header">
+                    <div class="hero-icon">🧠</div>
+                    <h1>Join MentIQ</h1>
+                    <p class="auth-subtitle">Create your account to start your mental health journey</p>
+                </div>
+
+                <form class="auth-form" onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label for="registerName">Full Name</label>
+                        <input type="text" id="registerName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="registerEmail">Email</label>
+                        <input type="email" id="registerEmail" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="registerPassword">Password</label>
+                        <input type="password" id="registerPassword" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="registerUserType">Register as:</label>
+                        <select id="registerUserType" onchange="toggleDoctorFields()">
+                            <option value="patient">Patient</option>
+                            <option value="doctor">Doctor</option>
+                        </select>
+                    </div>
+
+                    <div class="doctor-fields" id="doctorFields">
+                        <div class="form-group">
+                            <label for="specialty">Specialty</label>
+                            <input type="text" id="specialty" placeholder="e.g., Psychiatrist">
+                        </div>
+                        <div class="form-group">
+                            <label for="license">License Number</label>
+                            <input type="text" id="license" placeholder="Medical license number">
+                        </div>
+                    </div>
+
+                    <button type="submit">Register</button>
+                </form>
+
+                <div class="toggle-auth">
+                    Already have an account? <button type="button" onclick="toggleRegister()">Sign in</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleRegister() {
+            const wrapper = document.getElementById('authWrapper');
+            wrapper.classList.toggle('show-register');
+        }
+
+        function toggleDoctorFields() {
+            const userType = document.getElementById('registerUserType').value;
+            const doctorFields = document.getElementById('doctorFields');
+            
+            if (userType === 'doctor') {
+                doctorFields.classList.add('show');
+            } else {
+                doctorFields.classList.remove('show');
+            }
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const userType = document.getElementById('loginUserType').value;
+
+            const user = {
+                email: email,
+                name: email.split('@')[0],
+                type: userType,
+                loginDate: new Date().toISOString()
+            };
+
+            localStorage.setItem('currentUser', JSON.stringify(user));
+            localStorage.setItem('isLoggedIn', 'true');
+
+            if (userType === 'doctor') {
+                window.location.href = 'doctor-dashboard.html';
+            } else {
+                window.location.href = 'index.html';
+            }
+        }
+
+        function handleRegister(event) {
+            event.preventDefault();
+            
+            const fullName = document.getElementById('registerName').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
+            const password = document.getElementById('registerPassword').value.trim();
+            const userType = document.getElementById('registerUserType').value;
+            const specialty = document.getElementById('specialty').value.trim();
+            const license = document.getElementById('license').value.trim();
+
+            if (!fullName || !email || !password) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            if (userType === 'doctor' && (!specialty || !license)) {
+                alert('Please fill in specialty and license number for doctor registration');
+                return;
+            }
+
+            const user = {
+                id: Date.now().toString(),
+                email: email,
+                name: fullName,
+                type: userType,
+                specialty: specialty || null,
+                license: license || null,
+                joinDate: new Date().toISOString(),
+                patients: [],
+                articles: []
+            };
+
+            try {
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                users.push(user);
+                localStorage.setItem('users', JSON.stringify(users));
+
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                localStorage.setItem('isLoggedIn', 'true');
+
+                alert('Registration successful!');
+
+                setTimeout(() => {
+                    if (userType === 'doctor') {
+                        window.location.href = 'doctor-dashboard.html';
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                }, 500);
+            } catch (error) {
+                console.error('Registration error:', error);
+                alert('An error occurred during registration. Please try again.');
+            }
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const themeToggle = document.querySelector('.theme-toggle');
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            themeToggle.textContent = isDarkMode ? '☀️' : '🌙';
+            localStorage.setItem('darkMode', isDarkMode);
+        }
+
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            document.querySelector('.theme-toggle').textContent = '☀️';
+        }
+    </script>
+</body>
+</html>

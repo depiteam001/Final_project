@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MentIQ - Mental Health Platform</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo" onclick="navigateTo('home')">
+                🧠 MentIQ
+            </div>
+            <div class="nav-right">
+                <ul class="nav-menu" id="navMenu">
+                    <li><button class="nav-btn active" onclick="navigateTo('home')">Home</button></li>
+                    <li><button class="nav-btn" onclick="navigateTo('articles')">Articles</button></li>
+                    <li><button class="nav-btn" onclick="navigateTo('doctors')">Doctors</button></li>
+                    <li><button class="nav-btn" onclick="navigateTo('chatbot')">Chatbot</button></li>
+                    <li><button class="nav-btn" onclick="navigateTo('flashcard')">Motivation</button></li>
+                    <li id="dashboardNav" style="display: none;"><button class="nav-btn" onclick="navigateTo('dashboard')">Dashboard</button></li>
+                </ul>
+                <div id="userSection">
+                    <a href="login.html" id="loginBtn" class="btn btn-primary" style="padding: 8px 16px; font-size: 14px; text-decoration: none; margin-right: 15px;">Login</a>
+                    <button id="logoutBtn" onclick="logout()" class="btn btn-secondary" style="padding: 8px 16px; font-size: 14px; margin-right: 15px; display: none;">Logout</button>
+                </div>
+            </div>
+            <div class="hamburger" id="hamburger" onclick="toggleMobileMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Theme Toggle -->
+    <button class="theme-toggle-floating" id="themeToggle" onclick="toggleTheme()" title="Toggle dark mode">🌙</button>
+    
+    <!-- Pages Container -->
+    <div class="container">
+        <!-- HOME PAGE -->
+        <div id="home" class="page active">
+            <div class="hero">
+                <div class="hero-icon">🧠</div>
+                <h1>Welcome to MentIQ</h1>
+                <p>Raising awareness isn't just about speaking out — it's about helping someone find light in their darkest moment</p>
+                <div class="hero-buttons">
+                    <button class="btn btn-primary" onclick="navigateTo('articles')">Explore Articles</button>
+                    <button class="btn btn-secondary" onclick="navigateTo('doctors')">Find a Doctor</button>
+                </div>
+            </div>
+
+            <div class="features">
+                <div class="feature-card">
+                    <div class="icon">📚</div>
+                    <h3>Learn</h3>
+                    <p>Educational articles on mental health conditions</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">👨‍⚕️</div>
+                    <h3>Connect</h3>
+                    <p>Find qualified mental health professionals</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">🤖</div>
+                    <h3>Support</h3>
+                    <p>AI chatbot for initial guidance and support</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">✨</div>
+                    <h3>Motivate</h3>
+                    <p>Daily motivation and positive affirmations</p>
+                </div>
+            </div>
+            
+            <!-- Contact Section -->
+            <div class="contact-section">
+                <h2 class="section-title">Book Online Consultation</h2>
+                <p class="section-subtitle">Connect with a mental health specialist for personalized support</p>
+                <div class="contact-container">
+                    <div class="contact-form-card">
+                        <form class="contact-form" onsubmit="submitConsultation(event)">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Full Name</label>
+                                    <input type="text" id="contactName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Email</label>
+                                    <input type="email" id="contactEmail" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Phone Number</label>
+                                    <input type="tel" id="contactPhone" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Preferred Date</label>
+                                    <input type="date" id="consultationDate" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Consultation Type</label>
+                                <select id="consultationType" required>
+                                    <option value="">Select consultation type</option>
+                                    <option value="anxiety">Anxiety & Stress</option>
+                                    <option value="depression">Depression</option>
+                                    <option value="therapy">General Therapy</option>
+                                    <option value="couples">Couples Counseling</option>
+                                    <option value="family">Family Therapy</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Message (Optional)</label>
+                                <textarea id="consultationMessage" rows="4" placeholder="Tell us about your concerns or what you'd like to discuss..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary contact-btn">📅 Book Consultation</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ARTICLES PAGE -->
+        <div id="articles" class="page">
+            <h2 class="page-title">Mental Health Articles</h2>
+            <div class="category-filter" id="categoryFilter">
+                <button class="category-btn active" onclick="filterArticles(null)">All</button>
+                <button class="category-btn" onclick="filterArticles('Depression')">Depression</button>
+                <button class="category-btn" onclick="filterArticles('Anxiety')">Anxiety</button>
+                <button class="category-btn" onclick="filterArticles('Bipolar')">Bipolar</button>
+                <button class="category-btn" onclick="filterArticles('PTSD')">PTSD</button>
+                <button class="category-btn" onclick="filterArticles('OCD')">OCD</button>
+                <button class="category-btn" onclick="filterArticles('ADHD')">ADHD</button>
+            </div>
+            <div class="articles-grid" id="articlesGrid">
+                <div class="article-card">
+                    <div class="article-header">🧠</div>
+                    <div class="article-body">
+                        <div class="article-category">Depression</div>
+                        <div class="article-title">Understanding Depression</div>
+                        <div class="article-excerpt">Depression is more than sadness. Learn the signs and coping strategies.</div>
+                        <div class="read-more">Read More →</div>
+                    </div>
+                </div>
+                <div class="article-card">
+                    <div class="article-header">💙</div>
+                    <div class="article-body">
+                        <div class="article-category">Anxiety</div>
+                        <div class="article-title">Managing Anxiety Disorders</div>
+                        <div class="article-excerpt">Explore proven techniques to manage anxiety and panic attacks.</div>
+                        <div class="read-more">Read More →</div>
+                    </div>
+                </div>
+                <div class="article-card">
+                    <div class="article-header">🌙</div>
+                    <div class="article-body">
+                        <div class="article-category">Bipolar</div>
+                        <div class="article-title">Bipolar Disorder Explained</div>
+                        <div class="article-excerpt">A comprehensive guide to understanding mood episodes and treatment.</div>
+                        <div class="read-more">Read More →</div>
+                    </div>
+                </div>
+                <div class="article-card">
+                    <div class="article-header">🕊️</div>
+                    <div class="article-body">
+                        <div class="article-category">PTSD</div>
+                        <div class="article-title">PTSD Recovery Guide</div>
+                        <div class="article-excerpt">Healing from trauma with evidence-based therapeutic approaches.</div>
+                        <div class="read-more">Read More →</div>
+                    </div>
+                </div>
+                <div class="article-card">
+                    <div class="article-header">✨</div>
+                    <div class="article-body">
+                        <div class="article-category">OCD</div>
+                        <div class="article-title">OCD Management Tips</div>
+                        <div class="article-excerpt">Understanding intrusive thoughts and breaking the cycle.</div>
+                        <div class="read-more">Read More →</div>
+                    </div>
+                </div>
+                <div class="article-card">
+                    <div class="article-header">⚡</div>
+                    <div class="article-body">
+                        <div class="article-category">ADHD</div>
+                        <div class="article-title">ADHD in Adults</div>
+                        <div class="article-excerpt">Recognizing ADHD symptoms and strategies for daily life.</div>
+                        <div class="read-more">Read More →</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DOCTORS PAGE -->
+        <div id="doctors" class="page">
+            <h2 class="page-title">Find a Mental Health Professional</h2>
+            <div class="filters-section">
+                <div class="filter-group">
+                    <div>
+                        <label>Country</label>
+                        <select id="countryFilter" onchange="applyDoctorFilters()">
+                            <option value="">All Countries</option>
+                            <option value="Egypt">Egypt</option>
+                            <option value="USA">USA</option>
+                            <option value="UK">UK</option>
+                            <option value="UAE">UAE</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>City</label>
+                        <select id="cityFilter" onchange="applyDoctorFilters()">
+                            <option value="">All Cities</option>
+                            <option value="Cairo">Cairo</option>
+                            <option value="Alexandria">Alexandria</option>
+                            <option value="New York">New York</option>
+                            <option value="London">London</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Specialty</label>
+                        <select id="specialtyFilter" onchange="applyDoctorFilters()">
+                            <option value="">All Specialties</option>
+                            <option value="Psychiatrist">Psychiatrist</option>
+                            <option value="Psychologist">Psychologist</option>
+                            <option value="Clinical Psychologist">Clinical Psychologist</option>
+                            <option value="Counselor">Counselor</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="doctors-list" id="doctorsList">
+                <div class="doctor-card">
+                    <div class="doctor-avatar">👩‍⚕️</div>
+                    <div class="doctor-info">
+                        <div class="doctor-name">Dr. Sarah Ahmed</div>
+                        <div class="doctor-specialty">Psychiatrist</div>
+                        <div class="doctor-details">
+                            <span>📍 Cairo, Egypt</span>
+                            <span>⏱️ 12 years</span>
+                            <span class="doctor-rating">⭐ 4.8</span>
+                        </div>
+                    </div>
+                    <div class="doctor-actions">
+                        <button class="action-btn" onclick="contactDoctor('Sarah Ahmed', 'call')">📞 Call</button>
+                        <button class="action-btn" onclick="contactDoctor('Sarah Ahmed', 'message')">💬 Message</button>
+                        <button class="action-btn" onclick="saveDoctor('Sarah Ahmed')">❤️ Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHATBOT PAGE -->
+        <div id="chatbot" class="page">
+            <h2 class="page-title">Mental Health Support Chatbot</h2>
+            <div class="chat-container">
+                <div class="chat-header">💬 MentIQ Assistant</div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message bot-message">
+                        Hello! 👋 I'm here to listen and support you. Please share what's on your mind.
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="chatInput" placeholder="Type your message..." onkeypress="handleChatKeypress(event)">
+                    <button class="send-btn" onclick="sendChatMessage()">Send</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- FLASHCARD PAGE -->
+        <div id="flashcard" class="page">
+            <h2 class="page-title">Daily Motivation Challenge</h2>
+            <div class="flashcard-container">
+                <div class="streak-counter">🔥 Streak: <span id="streakCount">0</span> days</div>
+                <p class="game-title">Choose a card to reveal your daily motivation message</p>
+                <div class="cards-wrapper" id="cardsWrapper">
+                    <div class="flashcard left" onclick="selectCard(0)">✨</div>
+                    <div class="flashcard center" onclick="selectCard(1)">💫</div>
+                    <div class="flashcard right" onclick="selectCard(2)">⭐</div>
+                </div>
+                <div id="messageContainer"></div>
+                <div class="game-buttons" id="gameButtons" style="display: none;">
+                    <button class="card-btn card-btn-primary" onclick="resetGame()">🎲 Play Again</button>
+                    <button class="card-btn card-btn-secondary" onclick="saveSelectedCard()">💾 Save Message</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- DASHBOARD PAGE -->
+        <div id="dashboard" class="page"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Dashboard - MentIQ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+
+        /* ===== NAVIGATION ===== */
+        nav {
+            background: white;
+            box-shadow: 0 4px 20px rgba(0, 137, 123, 0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #00897b;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logo:hover {
+            color: #00695c;
+            transform: scale(1.05);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.3s ease;
+            padding: 8px 16px;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .nav-btn:hover {
+            color: #00897b;
+            background: #e0f7fa;
+        }
+
+        .nav-btn.active {
+            color: white;
+            background: linear-gradient(135deg, #00897b 0%, #00695c 100%);
+            box-shadow: 0 4px 12px rgba(0, 137, 123, 0.3);
+        }
+
+        .nav-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            background: #00897b;
+            border-radius: 50%;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #e0f7fa;
+            border-radius: 20px;
+            color: #00897b;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .user-info:hover {
+            background: #b2ebf2;
+            transform: translateY(-2px);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00897b 0%, #00695c 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 137, 123, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 137, 123, 0.3);
+        }
+
+        .btn-secondary {
+            background: #e0f7fa;
+            color: #00897b;
+            border: 2px solid #00897b;
+        }
+
+        .btn-secondary:hover {
+            background: #00897b;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* ===== CONTAINER ===== */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .page-title {
+            text-align: center;
+            color: #00695c;
+            font-size: 36px;
+            margin-bottom: 40px;
+            font-weight: bold;
+            animation: slideInDown 0.6s ease-out;
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* ===== SECTIONS ===== */
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* ===== DASHBOARD GRID ===== */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .dashboard-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid transparent;
+            animation: slideInUp 0.6s ease-out;
+        }
+
+        .dashboard-card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .dashboard-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 35px rgba(0, 137, 123, 0.2);
+            border-color: #00897b;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .card-icon {
+            font-size: 40px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #00695c;
+        }
+
+        .stat-number {
+            font-size: 48px;
+            font-weight: bold;
+            color: #00897b;
+            margin: 10px 0;
+            animation: slideInUp 0.6s ease-out 0.2s backwards;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* ===== PATIENT LIST ===== */
+        .patients-list {
+            margin-top: 30px;
+        }
+
+        .patients-list h3 {
+            color: #00695c;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .patient-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            border-left: 5px solid #00897b;
+            animation: slideInUp 0.6s ease-out;
+        }
+
+        .patient-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 8px 20px rgba(0, 137, 123, 0.15);
+        }
+
+        .patient-info {
+            margin: 15px 0;
+        }
+
+        .patient-info p {
+            margin: 8px 0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .patient-info strong {
+            color: #00695c;
+        }
+
+        .status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .status.active {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .patient-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .patient-actions button {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        /* ===== ARTICLE CARDS ===== */
+        .articles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .article-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            animation: scaleIn 0.6s ease-out;
+        }
+
+        .article-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 28px rgba(0, 137, 123, 0.2);
+        }
+
+        .article-header {
+            background: linear-gradient(135deg, #00897b 0%, #00695c 100%);
+            padding: 40px 20px;
+            text-align: center;
+            font-size: 45px;
+            transition: all 0.3s ease;
+        }
+
+        .article-card:hover .article-header {
+            transform: scale(1.1);
+        }
+
+        .article-body {
+            padding: 20px;
+        }
+
+        .article-category {
+            color: #00897b;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .article-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #00695c;
+            margin-bottom: 10px;
+        }
+
+        .article-excerpt {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .article-meta {
+            color: #999;
+            font-size: 12px;
+            margin-bottom: 15px;
+        }
+
+        .article-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .article-actions button {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-danger {
+            background: #ffebee;
+            color: #f44336;
+        }
+
+        .btn-danger:hover {
+            background: #f44336;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* ===== ADD ARTICLE FORM ===== */
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            color: #00695c;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            padding: 12px 15px;
+            border: 2px solid #e0f7fa;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #00897b;
+            box-shadow: 0 0 0 3px rgba(0, 137, 123, 0.1);
+        }
+
+        /* ===== PROFILE ===== */
+        .profile-info {
+            margin-bottom: 20px;
+        }
+
+        .profile-info h3 {
+            color: #00695c;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+
+        .profile-info p {
+            margin: 10px 0;
+            color: #333;
+        }
+
+        .profile-info strong {
+            color: #00897b;
+        }
+
+        .profile-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px 20px;
+            background: #f5f5f5;
+            border-radius: 15px;
+            margin: 20px 0;
+            animation: slideInUp 0.6s ease-out;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 15px;
+            }
+
+            .page-title {
+                font-size: 28px;
+            }
+
+            .nav-menu {
+                display: none;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .articles-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <div class="logo">🧠 MentIQ Doctor</div>
+            <div class="nav-right">
+                <ul class="nav-menu">
+                    <li><button class="nav-btn active" onclick="showSection('patients')">👥 Patients</button></li>
+                    <li><button class="nav-btn" onclick="showSection('articles')">📝 Articles</button></li>
+                    <li><button class="nav-btn" onclick="showSection('profile')">👨‍⚕️ Profile</button></li>
+                </ul>
+                <div class="user-info" id="doctorInfo">
+                    👨‍⚕️ <span id="doctorName">Dr. Smith</span>
+                </div>
+                <button class="btn btn-secondary" onclick="logout()" style="padding: 8px 16px; font-size: 14px;">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- PATIENTS SECTION -->
+        <div id="patients" class="section active">
+            <h2 class="page-title">👥 Patient Management</h2>
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-icon">👥</div>
+                        <div class="card-title">Total Patients</div>
+                    </div>
+                    <div class="stat-number" id="totalPatients">0</div>
+                    <div class="stat-label">Registered Patients</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-icon">📅</div>
+                        <div class="card-title">Today's Appointments</div>
+                    </div>
+                    <div class="stat-number" id="todayAppointments">0</div>
+                    <div class="stat-label">Scheduled Today</div>
+                </div>
+            </div>
+            
+            <div class="patients-list" id="patientsList">
+                <h3>Patient List</h3>
+                <div id="patientsContainer"></div>
+            </div>
+        </div>
+
+        <!-- ARTICLES SECTION -->
+        <div id="articles" class="section">
+            <h2 class="page-title">📝 Article Management</h2>
+            <button class="btn btn-primary" onclick="showAddArticle()" style="margin-bottom: 20px;">➕ Add New Article</button>
+            
+            <div id="addArticleForm" class="dashboard-card" style="display: none;">
+                <h3 style="color: #00695c; margin-bottom: 20px;">Add New Article</h3>
+                <form class="auth-form" onsubmit="addArticle(event)">
+                    <div class="form-group">
+                        <label for="articleTitle">Title</label>
+                        <input type="text" id="articleTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="articleCategory">Category</label>
+                        <select id="articleCategory" required>
+                            <option value="Depression">Depression</option>
+                            <option value="Anxiety">Anxiety</option>
+                            <option value="Bipolar">Bipolar</option>
+                            <option value="PTSD">PTSD</option>
+                            <option value="OCD">OCD</option>
+                            <option value="ADHD">ADHD</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="articleExcerpt">Excerpt</label>
+                        <textarea id="articleExcerpt" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="articleIcon">Icon (Emoji)</label>
+                        <input type="text" id="articleIcon" placeholder="🧠" maxlength="2">
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" class="btn btn-primary" style="flex: 1;">Add Article</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideAddArticle()" style="flex: 1;">Cancel</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="articles-grid" id="doctorArticles"></div>
+        </div>
+
+        <!-- PROFILE SECTION -->
+        <div id="profile" class="section">
+            <h2 class="page-title">👨‍⚕️ Doctor Profile</h2>
+            <div class="dashboard-card">
+                <div id="doctorProfile"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDoctor = null;
+        let patients = [];
+        let doctorArticles = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            checkDoctorAuth();
+            loadDoctorData();
+        });
+
+        function checkDoctorAuth() {
+            const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            
+            if (!user || !isLoggedIn || user.type !== 'doctor') {
+                window.location.href = 'login.html';
+                return false;
+            }
+            
+            currentDoctor = user;
+            document.getElementById('doctorName').textContent = `Dr. ${user.name}`;
+            return true;
+        }
+
+        function loadDoctorData() {
+            patients = JSON.parse(localStorage.getItem('patients') || '[]');
+            doctorArticles = JSON.parse(localStorage.getItem('doctorArticles') || '[]');
+            
+            updateStats();
+            renderPatients();
+            renderDoctorArticles();
+            renderDoctorProfile();
+        }
+
+        function showSection(sectionName) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            document.getElementById(sectionName).classList.add('active');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            event.target.classList.add('active');
+        }
+
+        function updateStats() {
+            document.getElementById('totalPatients').textContent = patients.length;
+            document.getElementById('todayAppointments').textContent = getTodayAppointments();
+        }
+
+        function getTodayAppointments() {
+            const today = new Date().toDateString();
+            return patients.filter(patient => 
+                patient.appointments && 
+                patient.appointments.some(apt => new Date(apt.date).toDateString() === today)
+            ).length;
+        }
+
+        function renderPatients() {
+            const container = document.getElementById('patientsContainer');
+            
+            if (patients.length === 0) {
+                container.innerHTML = '<div class="empty-state">No patients registered yet. Start building your patient network!</div>';
+                return;
+            }
+            
+            container.innerHTML = patients.map(patient => `
+                <div class="patient-card">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <h4 style="color: #00695c; font-size: 18px; margin-bottom: 8px;">${patient.name}</h4>
+                            <div class="patient-info">
+                                <p><strong>Email:</strong> ${patient.email}</p>
+                                <p><strong>Joined:</strong> ${new Date(patient.joinDate).toLocaleDateString()}</p>
+                                <p><strong>Last Visit:</strong> ${patient.lastVisit || 'Never'}</p>
+                                <p><strong>Status:</strong> <span class="status ${patient.status || 'active'}">${patient.status || 'Active'}</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="patient-actions">
+                        <button class="btn btn-primary" onclick="viewPatient('${patient.id}')">View Details</button>
+                        <button class="btn btn-secondary" onclick="scheduleAppointment('${patient.id}')">Schedule</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderDoctorArticles() {
+            const container = document.getElementById('doctorArticles');
+            
+            if (doctorArticles.length === 0) {
+                container.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;">No articles created yet. Click "Add New Article" to get started.</div>';
+                return;
+            }
+            
+            container.innerHTML = doctorArticles.map(article => `
+                <div class="article-card">
+                    <div class="article-header">${article.icon}</div>
+                    <div class="article-body">
+                        <div class="article-category">${article.category}</div>
+                        <div class="article-title">${article.title}</div>
+                        <div class="article-excerpt">${article.excerpt}</div>
+                        <div class="article-meta">
+                            <small>By Dr. ${currentDoctor ? currentDoctor.name : 'Doctor'} • ${new Date(article.createdDate).toLocaleDateString()}</small>
+                        </div>
+                        <div class="article-actions">
+                            <button class="btn btn-secondary" onclick="editArticle('${article.id}')">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteArticle('${article.id}')">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderDoctorProfile() {
+            const container = document.getElementById('doctorProfile');
+            
+            if (!currentDoctor) {
+                container.innerHTML = '<div class="empty-state">Loading profile...</div>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="profile-info">
+                    <h3>Dr. ${currentDoctor.name}</h3>
+                    <p><strong>Email:</strong> ${currentDoctor.email}</p>
+                    <p><strong>Specialty:</strong> ${currentDoctor.specialty || 'General Practice'}</p>
+                    <p><strong>License:</strong> ${currentDoctor.license || 'N/A'}</p>
+                    <p><strong>Joined:</strong> ${new Date(currentDoctor.joinDate).toLocaleDateString()}</p>
+                    <p><strong>Total Patients:</strong> ${patients.length}</p>
+                    <p><strong>Articles Published:</strong> ${doctorArticles.length}</p>
+                </div>
+                <div class="profile-actions">
+                    <button class="btn btn-primary" onclick="editProfile()">Edit Profile</button>
+                </div>
+            `;
+        }
+
+        function showAddArticle() {
+            document.getElementById('addArticleForm').style.display = 'block';
+        }
+
+        function hideAddArticle() {
+            document.getElementById('addArticleForm').style.display = 'none';
+            document.getElementById('addArticleForm').querySelector('form').reset();
+        }
+
+        function addArticle(event) {
+            event.preventDefault();
+            
+            const title = document.getElementById('articleTitle').value;
+            const category = document.getElementById('articleCategory').value;
+            const excerpt = document.getElementById('articleExcerpt').value;
+            const icon = document.getElementById('articleIcon').value || '🧠';
+            
+            const article = {
+                id: Date.now().toString(),
+                title: title,
+                category: category,
+                excerpt: excerpt,
+                icon: icon,
+                author: currentDoctor.name,
+                authorId: currentDoctor.email,
+                createdDate: new Date().toISOString()
+            };
+            
+            doctorArticles.push(article);
+            localStorage.setItem('doctorArticles', JSON.stringify(doctorArticles));
+            
+            const allArticles = JSON.parse(localStorage.getItem('articles') || '[]');
+            allArticles.push(article);
+            localStorage.setItem('articles', JSON.stringify(allArticles));
+            
+            hideAddArticle();
+            renderDoctorArticles();
+            alert('Article added successfully!');
+        }
+
+        function deleteArticle(articleId) {
+            if (confirm('Are you sure you want to delete this article?')) {
+                doctorArticles = doctorArticles.filter(a => a.id !== articleId);
+                localStorage.setItem('doctorArticles', JSON.stringify(doctorArticles));
+                renderDoctorArticles();
+                alert('Article deleted successfully!');
+            }
+        }
+
+        function viewPatient(patientId) {
+            const patient = patients.find(p => p.id === patientId);
+            if (patient) {
+                alert(`Patient Details:\n\nName: ${patient.name}\nEmail: ${patient.email}\nJoined: ${new Date(patient.joinDate).toLocaleDateString()}\nStatus: ${patient.status || 'Active'}`);
+            }
+        }
+
+        function scheduleAppointment(patientId) {
+            const date = prompt('Enter appointment date (YYYY-MM-DD):');
+            const time = prompt('Enter appointment time (HH:MM):');
+            
+            if (date && time) {
+                const patientIndex = patients.findIndex(p => p.id === patientId);
+                if (patientIndex !== -1) {
+                    if (!patients[patientIndex].appointments) {
+                        patients[patientIndex].appointments = [];
+                    }
+                    
+                    patients[patientIndex].appointments.push({
+                        date: date,
+                        time: time,
+                        doctor: currentDoctor.name,
+                        status: 'scheduled'
+                    });
+                    
+                    localStorage.setItem('patients', JSON.stringify(patients));
+                    updateStats();
+                    alert('Appointment scheduled successfully!');
+                }
+            }
+        }
+
+        function editProfile() {
+            alert('Profile editing feature coming soon!');
+        }
+
+        function logout() {
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('isLoggedIn');
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>
