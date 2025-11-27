@@ -157,7 +157,7 @@ function navigateTo(pageName) {
         renderCategoryFilters();
         filterArticles(null);
     } else if (pageName === 'doctors') {
-        renderDoctors(doctors);
+        applyDoctorFilters();
     } else if (pageName === 'dashboard') {
         initDashboard();
     }
@@ -177,7 +177,7 @@ function closeMobileMenu() {
 
 // ========== ARTICLES PAGE ==========
 
-function renderCategoryFilters() {
+async function renderCategoryFilters() {
     const categoryFilter = document.getElementById('categoryFilter');
     categoryFilter.innerHTML = '';
 
@@ -187,32 +187,64 @@ function renderCategoryFilters() {
     allBtn.onclick = () => filterArticles(null);
     categoryFilter.appendChild(allBtn);
 
-    const categories = [...new Set(articles.map(a => a.category))];
-    categories.forEach(category => {
-        const btn = document.createElement('button');
-        btn.className = 'category-btn';
-        btn.textContent = category;
-        btn.onclick = () => filterArticles(category);
-        categoryFilter.appendChild(btn);
-    });
+    try {
+        const response = await fetch('/api/articles');
+        const data = await response.json();
+        
+        if (data.success) {
+            const categories = [...new Set(data.articles.map(a => a.category))];
+            categories.forEach(category => {
+                const btn = document.createElement('button');
+                btn.className = 'category-btn';
+                btn.textContent = category;
+                btn.onclick = () => filterArticles(category);
+                categoryFilter.appendChild(btn);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading categories:', error);
+        // Fallback to hardcoded categories
+        const fallbackCategories = ['Depression', 'Anxiety', 'Bipolar', 'PTSD', 'OCD', 'ADHD'];
+        fallbackCategories.forEach(category => {
+            const btn = document.createElement('button');
+            btn.className = 'category-btn';
+            btn.textContent = category;
+            btn.onclick = () => filterArticles(category);
+            categoryFilter.appendChild(btn);
+        });
+    }
 }
 
-function filterArticles(category) {
+async function filterArticles(category) {
     selectedCategory = category;
-    const filtered = category ? articles.filter(a => a.category === category) : articles;
     
-    const articlesGrid = document.getElementById('articlesGrid');
-    articlesGrid.innerHTML = '';
+    try {
+        const url = category ? `/api/articles?category=${encodeURIComponent(category)}` : '/api/articles';
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (!data.success) {
+            console.error('Error fetching articles:', data.error);
+            return;
+        }
+        
+        const filtered = data.articles;
+        const articlesGrid = document.getElementById('articlesGrid');
+        articlesGrid.innerHTML = '';
 
-    filtered.forEach(article => {
+        filtered.forEach(article => {
         const card = document.createElement('div');
         card.className = 'article-card';
         
         const header = document.createElement('div');
         header.className = 'article-header';
-        header.style.backgroundImage = `url(${article.image})`;
-        header.style.backgroundSize = 'cover';
-        header.style.backgroundPosition = 'center';
+        if (article.image_url || article.image) {
+            header.style.backgroundImage = `url(${article.image_url || article.image})`;
+            header.style.backgroundSize = 'cover';
+            header.style.backgroundPosition = 'center';
+        } else {
+            header.textContent = article.icon || '📚';
+        }
         card.appendChild(header);
 
         const body = document.createElement('div');
@@ -236,7 +268,7 @@ function filterArticles(category) {
         const readMore = document.createElement('div');
         readMore.className = 'read-more';
         const link = document.createElement('a');
-        link.href = article.link;
+        link.href = article.link_url || article.link || '#';
         link.target = '_blank';
         link.textContent = 'Read More →';
         readMore.appendChild(link);
@@ -260,22 +292,36 @@ function filterArticles(category) {
             btn.classList.add('active');
         }
     });
+    } catch (error) {
+        console.error('Error loading articles:', error);
+    }
 }
 
 // ========== DOCTORS PAGE ==========
 
-function applyDoctorFilters() {
+async function applyDoctorFilters() {
     const country = document.getElementById('countryFilter').value;
     const city = document.getElementById('cityFilter').value;
     const specialty = document.getElementById('specialtyFilter').value;
 
-    const filtered = doctors.filter(doctor => {
-        return (!country || doctor.country === country) &&
-               (!city || doctor.city === city) &&
-               (!specialty || doctor.specialty === specialty);
-    });
-
-    renderDoctors(filtered);
+    try {
+        const params = new URLSearchParams();
+        if (country) params.append('country', country);
+        if (city) params.append('city', city);
+        if (specialty) params.append('specialty', specialty);
+        
+        const url = `/api/doctors${params.toString() ? '?' + params.toString() : ''}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.success) {
+            renderDoctors(data.doctors);
+        } else {
+            console.error('Error fetching doctors:', data.error);
+        }
+    } catch (error) {
+        console.error('Error loading doctors:', error);
+    }
 }
 
 function renderDoctors(doctorsList) {
@@ -314,10 +360,11 @@ function renderDoctors(doctorsList) {
 
         const details = document.createElement('div');
         details.className = 'doctor-details';
+        const experience = doctor.experience_years ? `${doctor.experience_years} years` : doctor.experience || 'N/A';
         details.innerHTML = `
             <span>📍 ${doctor.city}, ${doctor.country}</span>
-            <span>⏱️ ${doctor.experience}</span>
-            <span class="doctor-rating">⭐ ${doctor.rating}</span>
+            <span>⏱️ ${experience}</span>
+            <span class="doctor-rating">⭐ ${doctor.rating || '4.5'}</span>
         `;
         info.appendChild(details);
 
@@ -375,8 +422,16 @@ function bookDoctor(doctor) {
                     <input type="text" value="${doctor.city}, ${doctor.country}" readonly style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; background: #f5f5f5;">
                 </div>
                 <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Patient Name:</label>
-                    <input type="text" id="patientName" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Your Name:</label>
+                    <input type="text" id="patientName" value="${currentUser ? (currentUser.name || '') : ''}" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Your Email:</label>
+                    <input type="email" id="patientEmail" value="${currentUser ? (currentUser.email || '') : ''}" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Phone Number:</label>
+                    <input type="tel" id="patientPhone" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
                 </div>
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; margin-bottom: 5px; font-weight: 600;">Date:</label>
@@ -384,15 +439,11 @@ function bookDoctor(doctor) {
                 </div>
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; margin-bottom: 5px; font-weight: 600;">Time:</label>
-                    <select id="appointmentTime" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
-                        <option value="">Select time</option>
-                        <option value="09:00">09:00 AM</option>
-                        <option value="10:00">10:00 AM</option>
-                        <option value="11:00">11:00 AM</option>
-                        <option value="14:00">02:00 PM</option>
-                        <option value="15:00">03:00 PM</option>
-                        <option value="16:00">04:00 PM</option>
-                    </select>
+                    <input type="time" id="appointmentTime" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Message (Optional):</label>
+                    <textarea id="appointmentMessage" rows="3" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;"></textarea>
                 </div>
                 <div style="display: flex; gap: 10px; justify-content: flex-end;">
                     <button type="button" onclick="this.closest('div').parentElement.remove()" style="padding: 10px 20px; border: 2px solid #00897b; background: white; color: #00897b; border-radius: 8px; cursor: pointer;">Cancel</button>
@@ -402,27 +453,65 @@ function bookDoctor(doctor) {
         </div>
     `;
     
-    modal.querySelector('#bookingForm').onsubmit = (e) => {
+    modal.querySelector('#bookingForm').onsubmit = async (e) => {
         e.preventDefault();
-        const booking = {
-            doctor: doctor.name,
-            location: `${doctor.city}, ${doctor.country}`,
-            patientName: modal.querySelector('#patientName').value,
-            date: modal.querySelector('#appointmentDate').value,
-            time: modal.querySelector('#appointmentTime').value,
-            status: 'pending',
-            bookedAt: new Date().toISOString()
-        };
         
-        const bookings = JSON.parse(localStorage.getItem('doctorBookings') || '[]');
-        bookings.push(booking);
-        localStorage.setItem('doctorBookings', JSON.stringify(bookings));
+        // Check if user is logged in
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
         
-        alert(`Appointment booked with ${doctor.name} on ${booking.date} at ${booking.time}`);
-        modal.remove();
+        if (!isLoggedIn || !currentUser) {
+            alert('Please log in to book an appointment.');
+            modal.remove();
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        const patientName = document.getElementById('patientName').value;
+        const patientEmail = document.getElementById('patientEmail') ? document.getElementById('patientEmail').value : currentUser.email;
+        const patientPhone = document.getElementById('patientPhone') ? document.getElementById('patientPhone').value : '';
+        const appointmentDate = document.getElementById('appointmentDate').value;
+        const appointmentTime = document.getElementById('appointmentTime').value;
+        const appointmentMessage = document.getElementById('appointmentMessage') ? document.getElementById('appointmentMessage').value : '';
+        
+        try {
+            const response = await fetch('/api/consultation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    name: patientName,
+                    email: patientEmail,
+                    phone: patientPhone,
+                    date: appointmentDate,
+                    time: appointmentTime,
+                    type: 'General Consultation',
+                    doctor_id: doctor.user_id,
+                    message: appointmentMessage || `Booking appointment with ${doctor.name}`
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                alert('🎉 Appointment booked successfully! The doctor will be notified.');
+                modal.remove();
+            } else {
+                alert('Error: ' + (data.error || 'Failed to book appointment'));
+            }
+        } catch (error) {
+            console.error('Error booking appointment:', error);
+            alert('An error occurred. Please try again.');
+        }
     };
     
     document.body.appendChild(modal);
+}
+
+function saveDoctor(doctorName) {
+    alert(`Saved Dr. ${doctorName} to your favorites!`);
 }
 
 function saveDoctor(doctorName) {
@@ -437,7 +526,7 @@ function handleChatKeypress(event) {
     }
 }
 
-function sendChatMessage() {
+async function sendChatMessage() {
     const chatInput = document.getElementById('chatInput');
     const message = chatInput.value.trim();
 
@@ -453,13 +542,50 @@ function sendChatMessage() {
     chatInput.value = '';
     chatMessages.scrollTop = chatMessages.scrollHeight;
 
-    setTimeout(() => {
-        const botMsg = document.createElement('div');
-        botMsg.className = 'message bot-message';
-        botMsg.textContent = getBotResponse(message);
-        chatMessages.appendChild(botMsg);
+    // Show loading indicator
+    const loadingMsg = document.createElement('div');
+    loadingMsg.className = 'message bot-message';
+    loadingMsg.textContent = 'Thinking...';
+    loadingMsg.style.opacity = '0.6';
+    chatMessages.appendChild(loadingMsg);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    try {
+        const response = await fetch('/api/chatbot', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message: message })
+        });
+
+        const data = await response.json();
+        
+        // Remove loading message
+        loadingMsg.remove();
+        
+        if (data.success) {
+            const botMsg = document.createElement('div');
+            botMsg.className = 'message bot-message';
+            botMsg.textContent = data.response;
+            chatMessages.appendChild(botMsg);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        } else {
+            const errorMsg = document.createElement('div');
+            errorMsg.className = 'message bot-message';
+            errorMsg.textContent = 'Sorry, I encountered an error. Please try again.';
+            chatMessages.appendChild(errorMsg);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    } catch (error) {
+        console.error('Error sending message:', error);
+        loadingMsg.remove();
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'message bot-message';
+        errorMsg.textContent = 'Sorry, I encountered an error. Please try again.';
+        chatMessages.appendChild(errorMsg);
         chatMessages.scrollTop = chatMessages.scrollHeight;
-    }, 500);
+    }
 }
 
 function getBotResponse(message) {
@@ -681,35 +807,221 @@ function loadTheme() {
 
 // ========== CONSULTATION FORM ==========
 
-function submitConsultation(event) {
+function loadConsultationForm() {
+    const formCard = document.getElementById('consultationFormCard');
+    
+    // Check if user is logged in
+    const userData = localStorage.getItem('currentUser');
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    
+    if (!isLoggedIn || !userData) {
+        // Show sign up button if not logged in
+        formCard.innerHTML = `
+            <div style="text-align: center; padding: 40px;">
+                <h3 style="color: #00695c; margin-bottom: 20px;">Sign Up to Book Consultation</h3>
+                <p style="color: #666; margin-bottom: 30px;">Please create an account to book a consultation with our mental health specialists.</p>
+                <button class="btn btn-primary" onclick="window.location.href='login.html'" style="padding: 15px 40px; font-size: 16px;">
+                    Sign Up / Login
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    // User is logged in, show form with pre-filled data
+    try {
+        const user = JSON.parse(userData);
+        const userName = (user.name || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        const userEmail = (user.email || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        
+        formCard.innerHTML = `
+            <form class="contact-form" onsubmit="submitConsultation(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="contactName" value="${userName}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="contactEmail" value="${userEmail}" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="tel" id="contactPhone" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Preferred Date</label>
+                        <input type="date" id="consultationDate" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Select Doctor</label>
+                    <select id="selectedDoctor" required>
+                        <option value="">Loading doctors...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Consultation Type</label>
+                    <select id="consultationType" required>
+                        <option value="">Select consultation type</option>
+                        <option value="anxiety">Anxiety & Stress</option>
+                        <option value="depression">Depression</option>
+                        <option value="therapy">General Therapy</option>
+                        <option value="couples">Couples Counseling</option>
+                        <option value="family">Family Therapy</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Preferred Time</label>
+                    <input type="time" id="consultationTime" required>
+                </div>
+                <div class="form-group">
+                    <label>Message (Optional)</label>
+                    <textarea id="consultationMessage" rows="4" placeholder="Tell us about your concerns or what you'd like to discuss..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary contact-btn">📅 Book Consultation</button>
+            </form>
+        `;
+        // Load doctors into dropdown
+        loadDoctorsForConsultation();
+    } catch (error) {
+        console.error('Error loading user data:', error);
+        // If error, show form with blank fields
+        formCard.innerHTML = `
+            <form class="contact-form" onsubmit="submitConsultation(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="contactName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="contactEmail" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="tel" id="contactPhone" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Preferred Date</label>
+                        <input type="date" id="consultationDate" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Select Doctor</label>
+                    <select id="selectedDoctor" required>
+                        <option value="">Loading doctors...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Consultation Type</label>
+                    <select id="consultationType" required>
+                        <option value="">Select consultation type</option>
+                        <option value="anxiety">Anxiety & Stress</option>
+                        <option value="depression">Depression</option>
+                        <option value="therapy">General Therapy</option>
+                        <option value="couples">Couples Counseling</option>
+                        <option value="family">Family Therapy</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Preferred Time</label>
+                    <input type="time" id="consultationTime" required>
+                </div>
+                <div class="form-group">
+                    <label>Message (Optional)</label>
+                    <textarea id="consultationMessage" rows="4" placeholder="Tell us about your concerns or what you'd like to discuss..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary contact-btn">📅 Book Consultation</button>
+            </form>
+        `;
+        // Load doctors into dropdown
+        loadDoctorsForConsultation();
+    }
+}
+
+async function loadDoctorsForConsultation() {
+    try {
+        const response = await fetch('/api/doctors');
+        const data = await response.json();
+        
+        const doctorSelect = document.getElementById('selectedDoctor');
+        if (!doctorSelect) return;
+        
+        if (data.success && data.doctors && data.doctors.length > 0) {
+            doctorSelect.innerHTML = '<option value="">Select a doctor</option>';
+            data.doctors.forEach(doctor => {
+                const option = document.createElement('option');
+                option.value = doctor.user_id; // Use user_id to link to appointments
+                option.textContent = `${doctor.name} - ${doctor.specialty} (${doctor.city}, ${doctor.country})`;
+                doctorSelect.appendChild(option);
+            });
+        } else {
+            doctorSelect.innerHTML = '<option value="">No doctors available</option>';
+        }
+    } catch (error) {
+        console.error('Error loading doctors for consultation:', error);
+        const doctorSelect = document.getElementById('selectedDoctor');
+        if (doctorSelect) {
+            doctorSelect.innerHTML = '<option value="">Error loading doctors</option>';
+        }
+    }
+}
+
+async function submitConsultation(event) {
     event.preventDefault();
     
     const name = document.getElementById('contactName').value;
     const email = document.getElementById('contactEmail').value;
     const phone = document.getElementById('contactPhone').value;
     const date = document.getElementById('consultationDate').value;
+    const time = document.getElementById('consultationTime').value;
     const type = document.getElementById('consultationType').value;
+    const doctorId = document.getElementById('selectedDoctor').value;
     const message = document.getElementById('consultationMessage').value;
     
-    const consultation = {
-        id: Date.now().toString(),
-        name: name,
-        email: email,
-        phone: phone,
-        date: date,
-        type: type,
-        message: message,
-        status: 'pending',
-        submittedAt: new Date().toISOString()
-    };
+    if (!doctorId) {
+        alert('Please select a doctor to book an appointment.');
+        return;
+    }
     
-    const consultations = JSON.parse(localStorage.getItem('consultations') || '[]');
-    consultations.push(consultation);
-    localStorage.setItem('consultations', JSON.stringify(consultations));
-    
-    alert('🎉 Consultation request submitted successfully!\n\nWe will contact you within 24 hours to confirm your appointment.');
-    
-    event.target.reset();
+    try {
+        const response = await fetch('/api/consultation', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                name: name,
+                email: email,
+                phone: phone,
+                date: date,
+                time: time,
+                type: type,
+                doctor_id: parseInt(doctorId),
+                message: message
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('🎉 Appointment booked successfully!\n\nYour appointment has been scheduled and the doctor has been notified.');
+            event.target.reset();
+            // Reload form to maintain pre-filled data
+            loadConsultationForm();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to book appointment'));
+        }
+    } catch (error) {
+        console.error('Error submitting consultation:', error);
+        alert('An error occurred. Please try again.');
+    }
 }
 
 // ========== INITIALIZE ON LOAD ==========
@@ -811,16 +1123,37 @@ function updateNavigation() {
     const dashboardNav = document.getElementById('dashboardNav');
     const loginBtn = document.getElementById('loginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
+    const profileBtn = document.getElementById('profileBtn');
     
-    if (isLoggedIn && currentUser && currentUser.type === 'patient') {
-        dashboardNav.style.display = 'block';
-        loginBtn.style.display = 'none';
-        logoutBtn.style.display = 'inline-block';
-        showWelcomePopup();
+    if (isLoggedIn && currentUser) {
+        // Show profile button and logout, hide login
+        if (profileBtn) profileBtn.style.display = 'flex';
+        if (loginBtn) loginBtn.style.display = 'none';
+        if (logoutBtn) logoutBtn.style.display = 'inline-block';
+        
+        // Show dashboard nav only for patients
+        if (currentUser.user_type === 'patient' || currentUser.type === 'patient') {
+            if (dashboardNav) dashboardNav.style.display = 'block';
+        } else {
+            if (dashboardNav) dashboardNav.style.display = 'none';
+        }
+        
+        // Show welcome popup only once
+        if (!sessionStorage.getItem('welcomeShown')) {
+            showWelcomePopup();
+            sessionStorage.setItem('welcomeShown', 'true');
+        }
     } else {
-        dashboardNav.style.display = 'none';
-        loginBtn.style.display = 'inline-block';
-        logoutBtn.style.display = 'none';
+        // Hide profile button and logout, show login
+        if (profileBtn) profileBtn.style.display = 'none';
+        if (loginBtn) loginBtn.style.display = 'inline-block';
+        if (logoutBtn) logoutBtn.style.display = 'none';
+        if (dashboardNav) dashboardNav.style.display = 'none';
+    }
+    
+    // Reload consultation form when login status changes
+    if (typeof loadConsultationForm === 'function') {
+        loadConsultationForm();
     }
 }
 
@@ -843,31 +1176,87 @@ function showWelcomePopup() {
     }, 3000);
 }
 
-function checkLoginStatus() {
+async function checkLoginStatus() {
     const userData = localStorage.getItem('currentUser');
     const loginStatus = localStorage.getItem('isLoggedIn');
     
     if (userData && loginStatus === 'true') {
         currentUser = JSON.parse(userData);
         isLoggedIn = true;
+        
+        // Verify session is still valid by checking with API
+        try {
+            const response = await fetch('/api/auth/me', {
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.user) {
+                    // Update user data from server
+                    currentUser = data.user;
+                    localStorage.setItem('currentUser', JSON.stringify(data.user));
+                } else {
+                    // Session invalid, clear local storage
+                    currentUser = null;
+                    isLoggedIn = false;
+                    localStorage.removeItem('currentUser');
+                    localStorage.removeItem('isLoggedIn');
+                }
+            } else {
+                // Session invalid
+                currentUser = null;
+                isLoggedIn = false;
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('isLoggedIn');
+            }
+        } catch (error) {
+            console.error('Error checking login status:', error);
+            // Keep local data if API check fails
+        }
     } else {
         currentUser = null;
         isLoggedIn = false;
     }
 }
 
-function logout() {
-    localStorage.removeItem('currentUser');
-    localStorage.removeItem('isLoggedIn');
-    currentUser = null;
-    isLoggedIn = false;
-    updateNavigation();
-    
-    if (currentPage === 'dashboard') {
-        navigateTo('home');
+async function logout() {
+    try {
+        const response = await fetch('/api/auth/logout', {
+            method: 'POST',
+            credentials: 'include'
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('isLoggedIn');
+            sessionStorage.removeItem('welcomeShown');
+            currentUser = null;
+            isLoggedIn = false;
+            
+            // Redirect to login page
+            window.location.href = 'login.html';
+        } else {
+            // Still clear local storage even if API call fails
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('isLoggedIn');
+            sessionStorage.removeItem('welcomeShown');
+            currentUser = null;
+            isLoggedIn = false;
+            // Redirect to login page
+            window.location.href = 'login.html';
+        }
+    } catch (error) {
+        console.error('Logout error:', error);
+        // Still clear local storage
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('isLoggedIn');
+        currentUser = null;
+        isLoggedIn = false;
+        updateNavigation();
     }
-    
-    alert('You have been logged out successfully.');
 }
 
 function saveArticle(article) {
@@ -887,4 +1276,5 @@ document.addEventListener('DOMContentLoaded', () => {
     addCardHoverEffects();
     checkLoginStatus();
     updateNavigation();
+    loadConsultationForm();
 });

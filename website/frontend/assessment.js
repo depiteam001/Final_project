@@ -143,8 +143,14 @@ function generateRecommendations(formData, riskFactors) {
     return recommendations;
 }
 
-function submitAssessment(event) {
+async function submitAssessment(event) {
     event.preventDefault();
+
+    // Show loading state
+    const submitButton = event.target.querySelector('button[type="submit"]');
+    const originalText = submitButton.textContent;
+    submitButton.disabled = true;
+    submitButton.textContent = 'Processing with AI Model...';
 
     // Collect form data
     const formData = {
@@ -167,33 +173,73 @@ function submitAssessment(event) {
         medicationUsage: parseInt(document.getElementById('medicationUsage').value)
     };
 
-    // Calculate risk
-    const riskAssessment = calculateRiskScore(formData);
-    const riskLevel = getRiskLevel(riskAssessment.score);
-    const recommendations = generateRecommendations(formData, riskAssessment.factors);
+    try {
+        // Send to API for ML model prediction
+        const response = await fetch('/api/assessment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify(formData)
+        });
 
-    // Store assessment results
-    const assessmentResult = {
-        ...formData,
-        riskScore: riskAssessment.score,
-        riskLevel: riskLevel.level,
-        riskFactors: riskAssessment.factors,
-        recommendations: recommendations,
-        assessmentDate: new Date().toISOString()
-    };
+        const data = await response.json();
 
-    localStorage.setItem('mentalHealthAssessment', JSON.stringify(assessmentResult));
+        if (data.success) {
+            const assessment = data.assessment;
+            
+            // Get risk level details
+            const riskLevel = getRiskLevel(assessment.riskScore);
+            
+            // Store assessment results
+            const assessmentResult = {
+                ...formData,
+                riskScore: assessment.riskScore,
+                riskLevel: assessment.riskLevel,
+                riskFactors: assessment.riskFactors,
+                recommendations: assessment.recommendations,
+                prediction: assessment.prediction,
+                predictionProbability: assessment.predictionProbability,
+                assessmentDate: new Date().toISOString(),
+                mlModelUsed: true
+            };
 
-    // Show results
-    showResults(assessmentResult, riskLevel);
+            localStorage.setItem('mentalHealthAssessment', JSON.stringify(assessmentResult));
+
+            // Show results
+            showResults(assessmentResult, riskLevel, assessment.predictionProbability);
+        } else {
+            alert('Error: ' + (data.error || 'Failed to process assessment'));
+            submitButton.disabled = false;
+            submitButton.textContent = originalText;
+        }
+    } catch (error) {
+        console.error('Assessment error:', error);
+        alert('An error occurred while processing your assessment. Please try again.');
+        submitButton.disabled = false;
+        submitButton.textContent = originalText;
+    }
 }
 
-function showResults(assessment, riskLevel) {
+function showResults(assessment, riskLevel, predictionProbability = null) {
     const container = document.querySelector('.assessment-container');
+    
+    // Add ML model indicator if available
+    const mlIndicator = assessment.mlModelUsed && predictionProbability !== null 
+        ? `<div style="background: #e3f2fd; padding: 10px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #2196f3;">
+            <strong>🤖 AI-Powered Assessment</strong>
+            <p style="margin: 5px 0 0 0; font-size: 14px; color: #555;">
+                This assessment was analyzed using our trained machine learning model. 
+                Risk probability: ${(predictionProbability * 100).toFixed(1)}%
+            </p>
+        </div>`
+        : '';
     
     container.innerHTML = `
         <div class="assessment-results">
             <h2>Assessment Results</h2>
+            ${mlIndicator}
             
             <div class="risk-score-card" style="border-left: 5px solid ${riskLevel.color};">
                 <h3>Risk Level: <span style="color: ${riskLevel.color};">${riskLevel.level}</span></h3>
@@ -204,7 +250,7 @@ function showResults(assessment, riskLevel) {
                 <p>${riskLevel.description}</p>
             </div>
 
-            ${assessment.riskFactors.length > 0 ? `
+            ${assessment.riskFactors && assessment.riskFactors.length > 0 ? `
                 <div class="risk-factors">
                     <h3>Identified Risk Factors:</h3>
                     <ul>
@@ -225,14 +271,40 @@ function showResults(assessment, riskLevel) {
                 <div class="action-buttons">
                     <a href="index.html" class="btn btn-primary">Explore Resources</a>
                     <a href="login.html" class="btn btn-secondary">Create Account</a>
-                    ${assessment.riskScore >= 40 ? '<a href="doctors.html" class="btn btn-danger">Find Professional Help</a>' : ''}
+                    ${assessment.riskScore >= 40 ? '<a href="index.html#doctors" class="btn btn-danger">Find Professional Help</a>' : ''}
                 </div>
             </div>
         </div>
     `;
 }
 
-// Initialize slider values on page load
+// Theme management
+function toggleTheme() {
+    const body = document.body;
+    const themeToggle = document.getElementById('themeToggle');
+    
+    body.classList.toggle('dark-mode');
+    
+    const isDarkMode = body.classList.contains('dark-mode');
+    const icon = isDarkMode ? '☀️' : '🌙';
+    
+    if (themeToggle) themeToggle.textContent = icon;
+    
+    localStorage.setItem('darkMode', isDarkMode);
+}
+
+function loadTheme() {
+    const savedTheme = localStorage.getItem('darkMode');
+    const themeToggle = document.getElementById('themeToggle');
+    
+    if (savedTheme === 'true') {
+        document.body.classList.add('dark-mode');
+        if (themeToggle) themeToggle.textContent = '☀️';
+    }
+}
+
+// Initialize slider values and theme on page load
 document.addEventListener('DOMContentLoaded', () => {
     updateSliderValue('financialStress');
+    loadTheme();
 });

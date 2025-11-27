@@ -331,14 +331,6 @@
                         <input type="password" id="loginPassword" required>
                     </div>
 
-                    <div class="form-group">
-                        <label for="loginUserType">Login as:</label>
-                        <select id="loginUserType">
-                            <option value="patient">Patient</option>
-                            <option value="doctor">Doctor</option>
-                        </select>
-                    </div>
-
                     <button type="submit">Login</button>
                 </form>
 
@@ -401,6 +393,23 @@
     </div>
 
     <script>
+        // API base URL - detect if we need to use Flask server
+        // If accessing via Live Server (port 5500) or other port, use Flask server URL
+        const getApiBaseUrl = () => {
+            const port = window.location.port;
+            const hostname = window.location.hostname;
+            
+            // If on Flask server port (5000) or no port (default), use relative URLs
+            if (port === '5000' || (!port && hostname === 'localhost')) {
+                return '';
+            }
+            
+            // Otherwise, use Flask server URL
+            return 'http://localhost:5000';
+        };
+        
+        const API_BASE_URL = getApiBaseUrl();
+        
         function toggleRegister() {
             const wrapper = document.getElementById('authWrapper');
             wrapper.classList.toggle('show-register');
@@ -417,31 +426,56 @@
             }
         }
 
-        function handleLogin(event) {
+        async function handleLogin(event) {
             event.preventDefault();
             
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
-            const userType = document.getElementById('loginUserType').value;
 
-            const user = {
-                email: email,
-                name: email.split('@')[0],
-                type: userType,
-                loginDate: new Date().toISOString()
-            };
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
 
-            localStorage.setItem('currentUser', JSON.stringify(user));
-            localStorage.setItem('isLoggedIn', 'true');
+                const data = await response.json();
 
-            if (userType === 'doctor') {
-                window.location.href = 'doctor-dashboard.html';
-            } else {
-                window.location.href = 'index.html';
+                if (data.success) {
+                    localStorage.setItem('currentUser', JSON.stringify(data.user));
+                    localStorage.setItem('isLoggedIn', 'true');
+
+                    // Redirect based on actual user type from database
+                    const userType = data.user.user_type || data.user.type;
+                    console.log('Login successful. User data:', data.user);
+                    console.log('User type from API:', userType);
+                    
+                    // Use setTimeout to ensure localStorage is saved before redirect
+                    setTimeout(() => {
+                        if (userType === 'doctor') {
+                            console.log('Redirecting to doctor dashboard...');
+                            window.location.href = 'doctor-dashboard.html';
+                        } else {
+                            console.log('Redirecting to index...');
+                            window.location.href = 'index.html';
+                        }
+                    }, 100);
+                } else {
+                    alert('Login failed: ' + (data.error || 'Invalid credentials'));
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('An error occurred during login. Please try again.');
             }
         }
 
-        function handleRegister(event) {
+        async function handleRegister(event) {
             event.preventDefault();
             
             const fullName = document.getElementById('registerName').value.trim();
@@ -461,35 +495,45 @@
                 return;
             }
 
-            const user = {
-                id: Date.now().toString(),
-                email: email,
-                name: fullName,
-                type: userType,
-                specialty: specialty || null,
-                license: license || null,
-                joinDate: new Date().toISOString(),
-                patients: [],
-                articles: []
-            };
-
             try {
-                const users = JSON.parse(localStorage.getItem('users') || '[]');
-                users.push(user);
-                localStorage.setItem('users', JSON.stringify(users));
+                const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: email,
+                        password: password,
+                        name: fullName,
+                        user_type: userType,
+                        specialty: specialty || null,
+                        license_number: license || null
+                    })
+                });
 
-                localStorage.setItem('currentUser', JSON.stringify(user));
-                localStorage.setItem('isLoggedIn', 'true');
+                const data = await response.json();
 
-                alert('Registration successful!');
+                if (data.success) {
+                    localStorage.setItem('currentUser', JSON.stringify(data.user));
+                    localStorage.setItem('isLoggedIn', 'true');
 
-                setTimeout(() => {
-                    if (userType === 'doctor') {
-                        window.location.href = 'doctor-dashboard.html';
-                    } else {
-                        window.location.href = 'index.html';
-                    }
-                }, 500);
+                    alert('Registration successful!');
+
+                    setTimeout(() => {
+                        // Use user_type from API response, not from form
+                        const actualUserType = data.user.user_type || data.user.type || userType;
+                        console.log('Redirecting user type:', actualUserType);
+                        
+                        if (actualUserType === 'doctor') {
+                            window.location.href = 'doctor-dashboard.html';
+                        } else {
+                            window.location.href = 'index.html';
+                        }
+                    }, 500);
+                } else {
+                    alert('Registration failed: ' + (data.error || 'Unknown error'));
+                }
             } catch (error) {
                 console.error('Registration error:', error);
                 alert('An error occurred during registration. Please try again.');

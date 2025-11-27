@@ -24,12 +24,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-function handleLogin(event) {
+async function handleLogin(event) {
     event.preventDefault();
     
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const userType = document.getElementById('userType').value;
+    const email = document.getElementById('loginEmail')?.value || document.getElementById('email')?.value;
+    const password = document.getElementById('loginPassword')?.value || document.getElementById('password')?.value;
+    const userType = document.getElementById('loginUserType')?.value || document.getElementById('userType')?.value;
 
     // Simple validation
     if (!email || !password) {
@@ -37,35 +37,49 @@ function handleLogin(event) {
         return;
     }
 
-    // Get user data from registration or use email prefix as fallback
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const existingUser = users.find(u => u.email === email);
-    
-    const user = {
-        email: email,
-        name: existingUser ? existingUser.name : email.split('@')[0],
-        type: userType,
-        loginDate: new Date().toISOString()
-    };
+    try {
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',  // Important for session cookies
+            body: JSON.stringify({
+                email: email,
+                password: password,
+                user_type: userType
+            })
+        });
 
-    localStorage.setItem('currentUser', JSON.stringify(user));
-    localStorage.setItem('isLoggedIn', 'true');
+        const data = await response.json();
 
-    // Redirect based on user type
-    if (userType === 'doctor') {
-        window.location.href = 'doctor-dashboard.html';
-    } else {
-        window.location.href = 'index.html';
+        if (data.success) {
+            // Store user data in localStorage for frontend use
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
+            localStorage.setItem('isLoggedIn', 'true');
+
+            // Redirect based on user type
+            if (userType === 'doctor') {
+                window.location.href = 'doctor-dashboard.html';
+            } else {
+                window.location.href = 'index.html';
+            }
+        } else {
+            alert('Login failed: ' + (data.error || 'Invalid credentials'));
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        alert('An error occurred during login. Please try again.');
     }
 }
 
-function handleRegister(event) {
+async function handleRegister(event) {
     event.preventDefault();
     
-    const fullName = document.getElementById('fullName').value;
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const userType = document.getElementById('userType').value;
+    const fullName = document.getElementById('registerName')?.value || document.getElementById('fullName')?.value;
+    const email = document.getElementById('registerEmail')?.value || document.getElementById('email')?.value;
+    const password = document.getElementById('registerPassword')?.value || document.getElementById('password')?.value;
+    const userType = document.getElementById('registerUserType')?.value || document.getElementById('userType')?.value;
     const specialty = document.getElementById('specialty')?.value;
     const license = document.getElementById('license')?.value;
 
@@ -80,32 +94,45 @@ function handleRegister(event) {
         return;
     }
 
-    // Create user object
-    const user = {
-        email: email,
-        name: fullName,
-        type: userType,
-        specialty: specialty,
-        license: license,
-        joinDate: new Date().toISOString(),
-        patients: [],
-        articles: []
-    };
+    try {
+        const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',  // Important for session cookies
+            body: JSON.stringify({
+                email: email,
+                password: password,
+                name: fullName,
+                user_type: userType,
+                specialty: specialty || null,
+                license_number: license || null
+            })
+        });
 
-    // Save user data
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    users.push(user);
-    localStorage.setItem('users', JSON.stringify(users));
+        const data = await response.json();
 
-    localStorage.setItem('currentUser', JSON.stringify(user));
-    localStorage.setItem('isLoggedIn', 'true');
+        if (data.success) {
+            // Store user data in localStorage for frontend use
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
+            localStorage.setItem('isLoggedIn', 'true');
 
-    alert('Registration successful!');
+            alert('Registration successful!');
 
-    // Redirect based on user type
-    if (userType === 'doctor') {
-        window.location.href = 'doctor-dashboard.html';
-    } else {
-        window.location.href = 'index.html';
+            // Redirect based on user type
+            setTimeout(() => {
+                if (userType === 'doctor') {
+                    window.location.href = 'doctor-dashboard.html';
+                } else {
+                    window.location.href = 'index.html';
+                }
+            }, 500);
+        } else {
+            alert('Registration failed: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Registration error:', error);
+        alert('An error occurred during registration. Please try again.');
     }
 }

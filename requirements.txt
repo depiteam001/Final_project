@@ -3,3 +3,6 @@ joblib
 pandas
 numpy
 scikit-learn
+flask
+flask-cors
+werkzeug

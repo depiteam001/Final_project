@@ -22,9 +22,10 @@
                     <li><button class="nav-btn" onclick="navigateTo('flashcard')">Motivation</button></li>
                     <li id="dashboardNav" style="display: none;"><button class="nav-btn" onclick="navigateTo('dashboard')">Dashboard</button></li>
                 </ul>
-                <div id="userSection">
-                    <a href="login.html" id="loginBtn" class="btn btn-primary" style="padding: 8px 16px; font-size: 14px; text-decoration: none; margin-right: 15px;">Login</a>
-                    <button id="logoutBtn" onclick="logout()" class="btn btn-secondary" style="padding: 8px 16px; font-size: 14px; margin-right: 15px; display: none;">Logout</button>
+                <div id="userSection" style="display: flex; align-items: center; gap: 10px;">
+                    <a href="profile.html" id="profileBtn" class="btn btn-secondary" style="padding: 8px 12px; font-size: 18px; text-decoration: none; border-radius: 50%; width: 40px; height: 40px; display: none; align-items: center; justify-content: center; line-height: 1;">👤</a>
+                    <a href="login.html" id="loginBtn" class="btn btn-primary" style="padding: 8px 16px; font-size: 14px; text-decoration: none;">Login</a>
+                    <button id="logoutBtn" onclick="logout()" class="btn btn-secondary" style="padding: 8px 16px; font-size: 14px; display: none;">Logout</button>
                 </div>
             </div>
             <div class="hamburger" id="hamburger" onclick="toggleMobileMenu()">
@@ -47,9 +48,22 @@
                 <h1>Welcome to MentIQ</h1>
                 <p>Raising awareness isn't just about speaking out — it's about helping someone find light in their darkest moment</p>
                 <div class="hero-buttons">
-                    <button class="btn btn-primary" onclick="navigateTo('articles')">Explore Articles</button>
+                    <button class="btn btn-primary" onclick="window.location.href='assessment.html'">🧠 Take Assessment</button>
+                    <button class="btn btn-secondary" onclick="navigateTo('articles')">Explore Articles</button>
                     <button class="btn btn-secondary" onclick="navigateTo('doctors')">Find a Doctor</button>
                 </div>
+            </div>
+
+            <!-- Assessment CTA Section -->
+            <div class="assessment-cta-section" style="background: linear-gradient(135deg, #00897b 0%, #00695c 100%); padding: 60px 20px; margin: 60px 0; border-radius: 20px; text-align: center; color: white;">
+                <div class="cta-icon" style="font-size: 60px; margin-bottom: 20px;">🧠</div>
+                <h2 style="font-size: 32px; margin-bottom: 15px; color: white;">Take Your Mental Health Assessment</h2>
+                <p style="font-size: 18px; margin-bottom: 30px; opacity: 0.9; max-width: 600px; margin-left: auto; margin-right: auto;">
+                    Get personalized insights using our AI-powered assessment. Understand your mental health status and receive tailored recommendations.
+                </p>
+                <button class="btn" onclick="window.location.href='assessment.html'" style="background: white; color: #00897b; padding: 15px 40px; font-size: 18px; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                    🧠 Start Assessment Now
+                </button>
             </div>
 
             <div class="features">
@@ -80,45 +94,8 @@
                 <h2 class="section-title">Book Online Consultation</h2>
                 <p class="section-subtitle">Connect with a mental health specialist for personalized support</p>
                 <div class="contact-container">
-                    <div class="contact-form-card">
-                        <form class="contact-form" onsubmit="submitConsultation(event)">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Full Name</label>
-                                    <input type="text" id="contactName" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Email</label>
-                                    <input type="email" id="contactEmail" required>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Phone Number</label>
-                                    <input type="tel" id="contactPhone" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Preferred Date</label>
-                                    <input type="date" id="consultationDate" required>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Consultation Type</label>
-                                <select id="consultationType" required>
-                                    <option value="">Select consultation type</option>
-                                    <option value="anxiety">Anxiety & Stress</option>
-                                    <option value="depression">Depression</option>
-                                    <option value="therapy">General Therapy</option>
-                                    <option value="couples">Couples Counseling</option>
-                                    <option value="family">Family Therapy</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Message (Optional)</label>
-                                <textarea id="consultationMessage" rows="4" placeholder="Tell us about your concerns or what you'd like to discuss..."></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary contact-btn">📅 Book Consultation</button>
-                        </form>
+                    <div class="contact-form-card" id="consultationFormCard">
+                        <!-- Form will be loaded here by JavaScript -->
                     </div>
                 </div>
             </div>
