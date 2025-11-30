@@ -1,131 +1,181 @@
-# Mental Health Risk Assessment Model Tester
-# Streamlit Community Cloud deployment entry point
-
 import streamlit as st
 import joblib
 import pandas as pd
 import numpy as np
 import os
 
-# Page Config
+# -------------------------------------------
+# PAGE SETUP
+# -------------------------------------------
 st.set_page_config(
     page_title="Mental Health Model Tester",
     page_icon="🧠",
     layout="wide"
 )
 
-# Sidebar Navigation
-page = st.sidebar.radio(
-    "Navigation",
-    ["Model Tester", "Who Are We"]
-)
-
-# ================================
-# LOAD MODEL
-# ================================
+# -------------------------------------------
+# LOAD MODEL + FEATURE IMPORTANCE
+# -------------------------------------------
 @st.cache_resource
 def load_models():
-    model_dir = os.path.join(os.path.dirname(__file__), 'saved_models')
+    model_dir = os.path.join(os.path.dirname(__file__), "saved_models")
     try:
-        pipeline = joblib.load(os.path.join(model_dir, 'full_pipeline.pkl'))
-        feature_importance = pd.read_csv(os.path.join(model_dir, 'feature_importance.csv'))
+        pipeline = joblib.load(os.path.join(model_dir, "full_pipeline.pkl"))
+        feature_importance = pd.read_csv(os.path.join(model_dir, "feature_importance.csv"))
         return pipeline, feature_importance
     except Exception as e:
         st.error(f"Error loading models: {e}")
         return None, None
 
 pipeline, feature_importance = load_models()
+if pipeline is None:
+    st.stop()
 
-
-# =============================================================================
-# PAGE 1 — MODEL TESTING
-# =============================================================================
-if page == "Model Tester":
-    st.title("🧠 Mental Health Risk Assessment Model Tester")
-    st.write("Fill in all fields to test the mental health risk prediction model.")
-
-    if pipeline is None:
-        st.error("❌ Model could not be loaded. Ensure saved_models folder contains the files.")
+# -------------------------------------------
+# VALIDATION FUNCTION (NO DECIMALS)
+# -------------------------------------------
+def int_input(label, min_val, max_val):
+    val = st.number_input(label, min_value=min_val, max_value=max_val, step=1)
+    if isinstance(val, float) and not val.is_integer():
+        st.error("❌ Only whole numbers allowed — no decimals.")
         st.stop()
+    return int(val)
+
+# -------------------------------------------
+# "WHO WE ARE" PAGE
+# -------------------------------------------
+def load_image(name):
+    folder = os.path.join(os.path.dirname(__file__), "pictures")
+    for ext in [".jpg", ".jpeg", ".png"]:
+        img_path = os.path.join(folder, name + ext)
+        if os.path.exists(img_path):
+            return img_path
+    return None
+
+def who_we_are_page():
+    st.title("Who We Are")
+    st.write("""
+    Welcome to our Mental Health Risk Assessment project.  
+    We are a collaborative team focused on building meaningful data products that help improve well-being.
+    """)
+
+    team = [
+        ("Sherif Karam", "Team Leader"),
+        ("Ahmed Hazem", "Team Member"),
+        ("Hussein Khalaf", "Team Member"),
+        ("Salma Ahmed", "Team Member"),
+        ("Habiba Youssef", "Team Member"),
+        ("Nouran Shawkat", "Team Member")
+    ]
+
+    cols = st.columns(3)
+
+    for i, (name, role) in enumerate(team):
+        with cols[i % 3]:
+            img_path = load_image(name)
+            if img_path:
+                st.image(img_path, caption=name, width=220)
+            else:
+                st.warning(f"No image found for {name}")
+
+            st.markdown(f"""
+            ### {name}
+            **{role}**
+            """)
+
+# -------------------------------------------
+# MAIN APP PAGE
+# -------------------------------------------
+def model_tester_page():
+
+    st.title("🧠 Mental Health Risk Assessment Model Tester")
 
     tab1, tab2 = st.tabs(["📋 Single Prediction", "📊 Feature Importance"])
 
-    # ================================
-    # TAB 1 — PREDICTION
-    # ================================
     with tab1:
-        st.subheader("Enter Patient Information")
-
-        # ========== ALL FIELDS REQUIRED ==========
-        def required_select(label, options):
-            value = st.selectbox(label, ["-- Select --"] + options)
-            return None if value == "-- Select --" else value
-
-        def required_slider(label, min_v, max_v):
-            value = st.slider(label, min_v, max_v, value=None)
-            return value
+        st.subheader("Enter Patient Information (All fields required)")
 
         col1, col2, col3 = st.columns(3)
 
+        # -------- BASIC INFORMATION --------
         with col1:
             st.write("### Basic Information")
-            age = required_slider("Age", 16, 80)
-            gender = required_select("Gender", ["Male", "Female", "Other"])
-            employment = required_select("Employment Status",
-                                         ["Employed", "Unemployed", "Self-employed", "Retired", "Student"])
-            marital = required_select("Marital Status",
-                                      ["Single", "Married", "Divorced", "Widowed"])
+            age = int_input("Age", 16, 80)
+            gender = st.selectbox("Gender *", ["Choose...", "Male", "Female", "Other"])
+            if gender == "Choose...":
+                st.error("Please select a gender.")
+                st.stop()
 
+            employment = st.selectbox("Employment Status *",
+                ["Choose...", "Employed", "Unemployed", "Self-employed", "Retired", "Student"])
+            if employment == "Choose...":
+                st.error("Please select an employment status.")
+                st.stop()
+
+            marital = st.selectbox("Marital Status *",
+                ["Choose...", "Single", "Married", "Divorced", "Widowed"])
+            if marital == "Choose...":
+                st.error("Please select a marital status.")
+                st.stop()
+
+        # -------- LIFESTYLE --------
         with col2:
             st.write("### Lifestyle")
-            work_hours = required_slider("Work Hours per Week", 0, 60)
-            physical_activity = required_slider("Physical Activity Hours per Week", 0, 20)
-            screen_time = required_slider("Screen Time per Day (hours)", 0, 16)
-            sleep_hours = required_slider("Sleep Hours per Night", 0, 12)
-            alcohol_units = required_slider("Alcohol Units per Week", 0, 20)
-            smoking = required_select("Smoking Status", ["Never", "Former", "Current"])
+            work_hours = int_input("Work Hours per Week", 0, 60)
+            physical_activity = int_input("Physical Activity Hours per Week", 0, 20)
+            screen_time = int_input("Screen Time per Day (hours)", 0, 16)
+            sleep_hours = int_input("Sleep Hours per Night", 0, 12)
+            alcohol_units = int_input("Alcohol Units per Week", 0, 20)
+            smoking = st.selectbox("Smoking Status *", ["Choose...", "Never", "Former", "Current"])
+            if smoking == "Choose...":
+                st.error("Please select a smoking status.")
+                st.stop()
 
+        # -------- HEALTH --------
         with col3:
             st.write("### Health & Psychological")
-            financial_stress = required_slider("Financial Stress (1-10)", 1, 10)
-            family_history = required_select("Family History of Mental Illness", ["No", "Yes"])
-            chronic_condition = required_select("Chronic Condition", ["No", "Yes"])
-            support_system = required_slider("Support System Score (1-10)", 1, 10)
-            stress_level = required_slider("Stress Level Score (1-10)", 1, 10)
-            rumination = required_slider("Rumination Score (1-10)", 1, 10)
+            financial_stress = int_input("Financial Stress (1-10)", 1, 10)
+            family_history = st.selectbox("Family History of Mental Illness *", ["Choose...", "No", "Yes"])
+            if family_history == "Choose...":
+                st.error("Please select an answer.")
+                st.stop()
 
-        col4, col5, col6 = st.columns(3)
+            chronic_condition = st.selectbox("Chronic Condition *", ["Choose...", "No", "Yes"])
+            if chronic_condition == "Choose...":
+                st.error("Please select an answer.")
+                st.stop()
+
+            support_system = int_input("Support System Score (1-10)", 1, 10)
+            stress_level = int_input("Stress Level Score (1-10)", 1, 10)
+            rumination = int_input("Rumination Score (1-10)", 1, 10)
+
+        # -------- PSYCHOLOGICAL --------
+        col4, col5 = st.columns(2)
 
         with col4:
             st.write("### Emotional Indicators")
-            feeling_nervous = required_select("Feeling Nervous", ["No", "Yes"])
-            trouble_concentrating = required_select("Trouble Concentrating", ["No", "Yes"])
-            hopelessness = required_select("Hopelessness", ["No", "Yes"])
+            feeling_nervous = st.selectbox("Feeling Nervous *", ["Choose...", "No", "Yes"])
+            trouble_concentrating = st.selectbox("Trouble Concentrating *", ["Choose...", "No", "Yes"])
+            hopelessness = st.selectbox("Hopelessness *", ["Choose...", "No", "Yes"])
+
+            for field in [feeling_nervous, trouble_concentrating, hopelessness]:
+                if field == "Choose...":
+                    st.error("Please answer all emotional indicators.")
+                    st.stop()
 
         with col5:
             st.write("### Behavioral Indicators")
-            avoids_people = required_select("Avoids People", ["No", "Yes"])
-            nightmares = required_select("Nightmares", ["No", "Yes"])
-            medication_usage = required_select("Medication Usage", ["No", "Yes"])
+            avoids_people = st.selectbox("Avoids People *", ["Choose...", "No", "Yes"])
+            nightmares = st.selectbox("Nightmares *", ["Choose...", "No", "Yes"])
+            medication_usage = st.selectbox("Medication Usage *", ["Choose...", "No", "Yes"])
 
-        with col6:
-            st.write("")
+            for field in [avoids_people, nightmares, medication_usage]:
+                if field == "Choose...":
+                    st.error("Please answer all behavioral indicators.")
+                    st.stop()
 
-        # Check if all fields are filled
-        all_values = [
-            age, gender, employment, marital,
-            work_hours, physical_activity, screen_time, sleep_hours, alcohol_units,
-            smoking, financial_stress, family_history, chronic_condition,
-            support_system, stress_level, rumination,
-            feeling_nervous, trouble_concentrating, hopelessness,
-            avoids_people, nightmares, medication_usage
-        ]
-
+        # -------- PREDICTION --------
         if st.button("🔍 Predict Mental Health Risk"):
-            if any(v is None for v in all_values):
-                st.error("❌ Please fill ALL fields before submitting.")
-                st.stop()
-
             input_data = pd.DataFrame({
                 'Age': [age],
                 'Gender': [gender],
@@ -157,59 +207,31 @@ if page == "Model Tester":
             st.subheader("📊 Prediction Results")
 
             colA, colB = st.columns(2)
-
             with colA:
                 st.metric(
-                    "Mental Health Status",
-                    "⚠️ At Risk" if prediction == 1 else "✅ Low Risk"
+                    label="Mental Health Status",
+                    value="⚠️ At Risk" if prediction == 1 else "✅ Low Risk"
                 )
-
             with colB:
                 st.metric(
                     "Risk Probability",
-                    f"{proba[1] * 100:.1f}%"
+                    f"{proba[1]*100:.1f}%"
                 )
 
-    # ================================
-    # TAB 2 — FEATURE IMPORTANCE
-    # ================================
     with tab2:
-        st.subheader("📊 Feature Importance Analysis")
-
-        top_n = st.slider("Show top N features", 5, 30, 15)
+        st.subheader("Feature Importance")
+        top_n = st.slider("Top N Features", 5, 30, 15)
         top_features = feature_importance.head(top_n)
 
-        colC, colD = st.columns([2, 1])
-
-        with colC:
-            st.bar_chart(
-                data=top_features.set_index('feature')['importance_mean'],
-                height=400
-            )
-
-        with colD:
-            st.write("**Top Features:**")
-            st.dataframe(top_features[['feature', 'importance_mean']], hide_index=True)
-
-        st.write("### All Features")
-        st.dataframe(feature_importance, height=400)
+        st.bar_chart(top_features.set_index("feature")["importance_mean"])
 
 
-# =============================================================================
-# PAGE 2 — WHO ARE WE
-# =============================================================================
-if page == "Who Are We":
-    st.title("👥 Who Are We?")
-    st.write("Meet the team behind the Mental Health Risk Assessment System.")
+# -------------------------------------------
+# SIDEBAR NAVIGATION
+# -------------------------------------------
+page = st.sidebar.selectbox("Navigate", ["Model Tester", "Who We Are"])
 
-    st.markdown("""
-    ### **Team Members**
-    - 👑 **Sherif Karam** — *Team Leader*  
-    - **Ahmed Hazem**  
-    - **Hussein Khalaf**  
-    - **Salma Ahmed**  
-    - **Habiba Youssef**  
-    - **Nouran Shawkat**  
-    """)
-
-    st.success("We are a dedicated team working on innovative AI healthcare solutions ❤️")
+if page == "Model Tester":
+    model_tester_page()
+else:
+    who_we_are_page()
