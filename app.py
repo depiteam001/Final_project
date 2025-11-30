@@ -5,95 +5,83 @@ from PIL import Image
 # ---------------------------------------------------------
 # PAGE CONFIG
 # ---------------------------------------------------------
-st.set_page_config(page_title="Project App", layout="wide")
+st.set_page_config(
+    page_title="Team & Model App",
+    layout="wide"
+)
 
 # ---------------------------------------------------------
-# CUSTOM CSS
+# GLOBAL CSS
 # ---------------------------------------------------------
 st.markdown("""
 <style>
 
-/* Remove scroll */
-section.main > div { padding-top: 20px !important; }
-
-/* Navigation buttons */
-.nav-btn {
-    display: inline-block;
-    padding: 10px 18px;
-    background: #4aa3ff;
-    color: white;
-    border-radius: 10px;
-    margin-right: 10px;
-    font-weight: 600;
-    transition: 0.2s;
-}
-.nav-btn:hover {
-    background: #1d8bff;
+body {
+    overflow: hidden !important;
 }
 
-/* Team cards */
+/* Team card styling */
 .team-card {
-    border: 2px solid #e5e5e5;
-    border-radius: 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 18px;
     padding: 20px;
-    transition: all 0.2s ease-in-out;
     background: #ffffff;
+    transition: 0.25s ease;
     text-align: center;
 }
 .team-card:hover {
     transform: translateY(-6px);
-    box-shadow: 0px 6px 18px rgba(0,0,0,0.12);
+    box-shadow: 0px 8px 20px rgba(0,0,0,0.12);
     border-color: #4aa3ff;
 }
+
 .team-img {
-    border-radius: 12px;
+    border-radius: 14px;
     width: 100%;
-    height: 280px;
+    height: 260px;
     object-fit: cover;
     margin-bottom: 15px;
 }
+
 .team-name {
     font-size: 1.4rem;
     font-weight: 700;
-    margin-bottom: 5px;
 }
+
 .team-role {
     font-size: 1rem;
     color: #4aa3ff;
     margin-bottom: 12px;
 }
 
-input[type=number] {
-    -moz-appearance: textfield;
+/* Input styling */
+input[type=text] {
+    font-size: 1.1rem;
 }
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
+
+.note {
+    font-size: 0.85rem;
+    color: #777;
+    margin-top: -8px;
+    margin-bottom: 12px;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# PAGE NAVIGATION
+# SIDEBAR NAVIGATION
 # ---------------------------------------------------------
-st.markdown(
-    """
-    <a class='nav-btn' href='/?page=team'>Who We Are</a>
-    <a class='nav-btn' href='/?page=model'>Model Inputs</a>
-    """,
-    unsafe_allow_html=True
-)
+st.sidebar.title("Navigation")
+page = st.sidebar.radio("Go to:", ["👥 Who We Are", "🧮 Model Inputs"])
 
-query_params = st.query_params
-page = query_params.get("page", ["team"])[0]
+# =========================================================
+# PAGE 1 — TEAM PAGE
+# =========================================================
+if page == "👥 Who We Are":
 
-# ---------------------------------------------------------
-# TEAM PAGE
-# ---------------------------------------------------------
-if page == "team":
-
-    st.title("Meet Our Team")
+    st.markdown("<h1 style='text-align:center;'>Meet Our Team</h1>", unsafe_allow_html=True)
+    st.write("")
 
     team = [
         ("Sherif Karam", "Team Leader"),
@@ -104,67 +92,86 @@ if page == "team":
         ("Nouran Shawkat", "Member"),
     ]
 
-    cols = st.columns(3)
+    cols = st.columns(3, gap="large")
 
     for i, (name, role) in enumerate(team):
         with cols[i % 3]:
-            img_path_jpg = f"pictures/{name}.jpg"
+
+            # Auto-detect picture (.png or .jpg)
             img_path_png = f"pictures/{name}.png"
-            img_to_use = img_path_png if os.path.exists(img_path_png) else img_path_jpg
+            img_path_jpg = f"pictures/{name}.jpg"
+            img_file = img_path_png if os.path.exists(img_path_png) else img_path_jpg
 
-            st.markdown(f"""
-                <div class='team-card'>
-                    <img src='{img_to_use}' class='team-img'>
-                    <div class='team-name'>{name}</div>
-                    <div class='team-role'>{role}</div>
-                </div>
-            """, unsafe_allow_html=True)
+            st.markdown("<div class='team-card'>", unsafe_allow_html=True)
 
-# ---------------------------------------------------------
-# MODEL INPUTS PAGE
-# ---------------------------------------------------------
-elif page == "model":
+            if os.path.exists(img_file):
+                st.image(img_file, use_column_width=True, caption="", output_format="PNG")
+            else:
+                st.write("📌 No image found")
 
-    st.title("Model Feature Inputs")
+            st.markdown(
+                f"""
+                <div class='team-name'>{name}</div>
+                <div class='team-role'>{role}</div>
+                """,
+                unsafe_allow_html=True
+            )
 
-    st.markdown("""
-    Enter a value **between 1 and 10** for each feature (integers only).  
-    """)
+            st.markdown("</div>", unsafe_allow_html=True)
 
-    def int_input(label, help_text=""):
-        value = st.text_input(label, value="", help=help_text)
+# =========================================================
+# PAGE 2 — MODEL INPUTS
+# =========================================================
+elif page == "🧮 Model Inputs":
 
-        if value.strip() == "":
+    st.markdown("<h1 style='text-align:center;'>Model Feature Inputs</h1>", unsafe_allow_html=True)
+    st.write("")
+
+    st.markdown("### Please enter **integer values from 1 to 10 only**.")
+
+    def feature_input(label, note=""):
+        col = st.container()
+
+        value = col.text_input(label, "")
+
+        # Note under input
+        if note:
+            col.markdown(f"<div class='note'>{note}</div>", unsafe_allow_html=True)
+
+        # Validation
+        if value == "":
             return None
 
         if not value.isdigit():
-            st.error("❌ Only whole numbers are allowed.")
+            st.error(f"❌ '{label}' must be a whole number.")
             return None
 
         value = int(value)
 
         if value < 1 or value > 10:
-            st.error("❌ Value must be between 1 and 10.")
+            st.error(f"❌ '{label}' must be between **1 and 10**.")
             return None
 
         return value
 
-    st.subheader("🔧 Model Features")
-
     col1, col2 = st.columns(2)
 
     with col1:
-        feature1 = int_input("Feature 1", "This represents X1 meaning ...")
-        feature2 = int_input("Feature 2", "This measures behaviour Y ...")
-        feature3 = int_input("Feature 3")
+        f1 = feature_input("Feature 1", "This represents X1 in the model.")
+        f2 = feature_input("Feature 2", "Measures behavioural trend.")
+        f3 = feature_input("Feature 3")
 
     with col2:
-        feature4 = int_input("Feature 4")
-        feature5 = int_input("Feature 5", "Useful when analyzing ...")
-        feature6 = int_input("Feature 6")
+        f4 = feature_input("Feature 4")
+        f5 = feature_input("Feature 5", "Used for interpretation of category Y.")
+        f6 = feature_input("Feature 6")
 
-    if st.button("Submit"):
-        if None in [feature1, feature2, feature3, feature4, feature5, feature6]:
-            st.error("⚠️ Please complete all fields correctly.")
+    st.write("")
+    if st.button("Submit Inputs"):
+        features = [f1, f2, f3, f4, f5, f6]
+
+        if any(v is None for v in features):
+            st.error("⚠️ Please correct all inputs before submitting.")
         else:
-            st.success("✔️ All inputs are valid! Ready for model processing.")
+            st.success("✔️ All inputs are valid! Ready for model prediction.")
+            st.write("### Final Values:", features)
