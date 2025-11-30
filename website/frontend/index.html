@@ -20,7 +20,6 @@
                     <li><button class="nav-btn" onclick="navigateTo('doctors')">Doctors</button></li>
                     <li><button class="nav-btn" onclick="navigateTo('chatbot')">Chatbot</button></li>
                     <li><button class="nav-btn" onclick="navigateTo('flashcard')">Motivation</button></li>
-                    <li id="dashboardNav" style="display: none;"><button class="nav-btn" onclick="navigateTo('dashboard')">Dashboard</button></li>
                 </ul>
                 <div id="userSection" style="display: flex; align-items: center; gap: 10px;">
                     <a href="profile.html" id="profileBtn" class="btn btn-secondary" style="padding: 8px 12px; font-size: 18px; text-decoration: none; border-radius: 50%; width: 40px; height: 40px; display: none; align-items: center; justify-content: center; line-height: 1;">👤</a>
@@ -221,7 +220,6 @@
                         </div>
                     </div>
                     <div class="doctor-actions">
-                        <button class="action-btn" onclick="contactDoctor('Sarah Ahmed', 'call')">📞 Call</button>
                         <button class="action-btn" onclick="contactDoctor('Sarah Ahmed', 'message')">💬 Message</button>
                         <button class="action-btn" onclick="saveDoctor('Sarah Ahmed')">❤️ Save</button>
                     </div>
@@ -264,9 +262,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- DASHBOARD PAGE -->
-        <div id="dashboard" class="page"></div>
     </div>
 
     <script src="script.js"></script>

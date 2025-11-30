@@ -188,10 +188,10 @@ async function submitAssessment(event) {
 
         if (data.success) {
             const assessment = data.assessment;
-            
+
             // Get risk level details
             const riskLevel = getRiskLevel(assessment.riskScore);
-            
+
             // Store assessment results
             const assessmentResult = {
                 ...formData,
@@ -209,6 +209,9 @@ async function submitAssessment(event) {
 
             // Show results
             showResults(assessmentResult, riskLevel, assessment.predictionProbability);
+
+            // Scroll to the top of the screen
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
             alert('Error: ' + (data.error || 'Failed to process assessment'));
             submitButton.disabled = false;
@@ -224,7 +227,7 @@ async function submitAssessment(event) {
 
 function showResults(assessment, riskLevel, predictionProbability = null) {
     const container = document.querySelector('.assessment-container');
-    
+
     // Add ML model indicator if available
     const mlIndicator = assessment.mlModelUsed && predictionProbability !== null 
         ? `<div style="background: #e3f2fd; padding: 10px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #2196f3;">
@@ -235,7 +238,7 @@ function showResults(assessment, riskLevel, predictionProbability = null) {
             </p>
         </div>`
         : '';
-    
+
     container.innerHTML = `
         <div class="assessment-results">
             <h2>Assessment Results</h2>
@@ -270,12 +273,15 @@ function showResults(assessment, riskLevel, predictionProbability = null) {
                 <h3>Next Steps:</h3>
                 <div class="action-buttons">
                     <a href="index.html" class="btn btn-primary">Explore Resources</a>
-                    <a href="login.html" class="btn btn-secondary">Create Account</a>
-                    ${assessment.riskScore >= 40 ? '<a href="index.html#doctors" class="btn btn-danger">Find Professional Help</a>' : ''}
+                    ${assessment.riskScore >= 40 ? '<button class="btn btn-danger" onclick="navigateToDoctors()">Find Professional Help</button>' : ''}
                 </div>
             </div>
         </div>
     `;
+}
+
+function navigateToDoctors() {
+    window.location.href = 'index.html#doctors';
 }
 
 // Theme management

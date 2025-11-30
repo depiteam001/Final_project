@@ -218,7 +218,7 @@ def create_user(email, password, name, user_type, specialty=None, license_number
         if user_type == 'doctor':
             cursor.execute('''
                 INSERT INTO doctors (user_id, name, specialty, country, city, experience_years, rating, avatar)
-                VALUES (?, ?, ?, 'Unknown', 'Unknown', 0, 4.5, '👨‍⚕️')
+                VALUES (?, ?, ?, 'Egypt', 'Cairo', 0, 4.5, '👨‍⚕️')
             ''', (user_id, name, specialty or 'General'))
             conn.commit()
         

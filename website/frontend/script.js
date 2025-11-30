@@ -379,11 +379,11 @@ function renderDoctors(doctorsList) {
         bookBtn.onclick = () => bookDoctor(doctor);
         actions.appendChild(bookBtn);
 
-        const callBtn = document.createElement('button');
-        callBtn.className = 'action-btn';
-        callBtn.textContent = '📞 Call';
-        callBtn.onclick = () => contactDoctor(doctor.name, 'call');
-        actions.appendChild(callBtn);
+        // const callBtn = document.createElement('button');
+        // callBtn.className = 'action-btn';
+        // callBtn.textContent = '📞 Call';
+        // callBtn.onclick = () => contactDoctor(doctor.name, 'call');
+        // actions.appendChild(callBtn);
 
         const saveBtn = document.createElement('button');
         saveBtn.className = 'action-btn';
@@ -409,51 +409,61 @@ function bookDoctor(doctor) {
         justify-content: center; z-index: 1000;
     `;
     
+    // Check if dark mode is enabled
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    const bgColor = isDarkMode ? '#1e1e1e' : 'white';
+    const textColor = isDarkMode ? '#e0e0e0' : '#333';
+    const inputBg = isDarkMode ? '#2a2a2a' : 'white';
+    const inputBorder = isDarkMode ? '#333' : '#e0e0e0';
+    const readonlyBg = isDarkMode ? '#2a2a2a' : '#f5f5f5';
+    const labelColor = isDarkMode ? '#b2ebf2' : '#333';
+    const cancelBtnBg = isDarkMode ? '#2a2a2a' : 'white';
+    
     modal.innerHTML = `
-        <div style="background: white; padding: 30px; border-radius: 20px; max-width: 500px; width: 90%;">
-            <h3 style="color: #00695c; margin-bottom: 20px;">Book Appointment with ${doctor.name}</h3>
-            <form id="bookingForm">
+        <div id="bookingForm" style="background: ${bgColor}; color: ${textColor}; padding: 30px; border-radius: 20px; max-width: 500px; width: 90%; border: ${isDarkMode ? '1px solid #333' : 'none'};">
+            <h3 style="color: ${isDarkMode ? '#b2ebf2' : '#00695c'}; margin-bottom: 20px;">Book Appointment with ${doctor.name}</h3>
+            <form id="bookingFormElement">
                 <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Doctor:</label>
-                    <input type="text" value="${doctor.name}" readonly style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; background: #f5f5f5;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600; color: ${labelColor};">Doctor:</label>
+                    <input type="text" value="${doctor.name}" readonly style="width: 100%; padding: 10px; border: 2px solid ${inputBorder}; border-radius: 8px; background: ${readonlyBg}; color: ${textColor};">
                 </div>
                 <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Location:</label>
-                    <input type="text" value="${doctor.city}, ${doctor.country}" readonly style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; background: #f5f5f5;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600; color: ${labelColor};">Location:</label>
+                    <input type="text" value="${doctor.city}, ${doctor.country}" readonly style="width: 100%; padding: 10px; border: 2px solid ${inputBorder}; border-radius: 8px; background: ${readonlyBg}; color: ${textColor};">
                 </div>
                 <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Your Name:</label>
-                    <input type="text" id="patientName" value="${currentUser ? (currentUser.name || '') : ''}" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600; color: ${labelColor};">Your Name:</label>
+                    <input type="text" id="patientName" value="${currentUser ? (currentUser.name || '') : ''}" required style="width: 100%; padding: 10px; border: 2px solid ${inputBorder}; border-radius: 8px; background: ${inputBg}; color: ${textColor};">
                 </div>
                 <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Your Email:</label>
-                    <input type="email" id="patientEmail" value="${currentUser ? (currentUser.email || '') : ''}" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600; color: ${labelColor};">Your Email:</label>
+                    <input type="email" id="patientEmail" value="${currentUser ? (currentUser.email || '') : ''}" required style="width: 100%; padding: 10px; border: 2px solid ${inputBorder}; border-radius: 8px; background: ${inputBg}; color: ${textColor};">
                 </div>
                 <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Phone Number:</label>
-                    <input type="tel" id="patientPhone" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600; color: ${labelColor};">Phone Number:</label>
+                    <input type="tel" id="patientPhone" required style="width: 100%; padding: 10px; border: 2px solid ${inputBorder}; border-radius: 8px; background: ${inputBg}; color: ${textColor};">
                 </div>
                 <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Date:</label>
-                    <input type="date" id="appointmentDate" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600; color: ${labelColor};">Date:</label>
+                    <input type="date" id="appointmentDate" required style="width: 100%; padding: 10px; border: 2px solid ${inputBorder}; border-radius: 8px; background: ${inputBg}; color: ${textColor}; color-scheme: ${isDarkMode ? 'dark' : 'light'};">
                 </div>
                 <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Time:</label>
-                    <input type="time" id="appointmentTime" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600; color: ${labelColor};">Time:</label>
+                    <input type="time" id="appointmentTime" required style="width: 100%; padding: 10px; border: 2px solid ${inputBorder}; border-radius: 8px; background: ${inputBg}; color: ${textColor}; color-scheme: ${isDarkMode ? 'dark' : 'light'};">
                 </div>
                 <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Message (Optional):</label>
-                    <textarea id="appointmentMessage" rows="3" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;"></textarea>
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600; color: ${labelColor};">Message (Optional):</label>
+                    <textarea id="appointmentMessage" rows="3" style="width: 100%; padding: 10px; border: 2px solid ${inputBorder}; border-radius: 8px; background: ${inputBg}; color: ${textColor};"></textarea>
                 </div>
                 <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                    <button type="button" onclick="this.closest('div').parentElement.remove()" style="padding: 10px 20px; border: 2px solid #00897b; background: white; color: #00897b; border-radius: 8px; cursor: pointer;">Cancel</button>
+                    <button type="button" onclick="this.closest('#bookingForm').parentElement.remove()" style="padding: 10px 20px; border: 2px solid #00897b; background: ${cancelBtnBg}; color: #00897b; border-radius: 8px; cursor: pointer;">Cancel</button>
                     <button type="submit" style="padding: 10px 20px; background: #00897b; color: white; border: none; border-radius: 8px; cursor: pointer;">Book Appointment</button>
                 </div>
             </form>
         </div>
     `;
     
-    modal.querySelector('#bookingForm').onsubmit = async (e) => {
+    modal.querySelector('#bookingFormElement').onsubmit = async (e) => {
         e.preventDefault();
         
         // Check if user is logged in
@@ -508,10 +518,6 @@ function bookDoctor(doctor) {
     };
     
     document.body.appendChild(modal);
-}
-
-function saveDoctor(doctorName) {
-    alert(`Saved Dr. ${doctorName} to your favorites!`);
 }
 
 function saveDoctor(doctorName) {

@@ -6,3 +6,4 @@ scikit-learn
 flask
 flask-cors
 werkzeug
+bcrypt
