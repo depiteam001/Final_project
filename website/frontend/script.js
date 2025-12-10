@@ -9,6 +9,21 @@ let selectedCards = [];
 let currentUser = null;
 let isLoggedIn = false;
 
+// Cohere chat configuration
+const COHERE_API_KEY = 'irmS2xLuWioBIOYafttOflJyIAbCAv1gfTBs7y9d';
+const COHERE_SYSTEM_PREAMBLE = `You are MentIQ, a compassionate mental health support assistant.
+
+Guidelines:
+- Keep responses brief (2-4 sentences for most questions)
+- Be warm, empathetic, and personalized to the user's specific question
+- Provide practical, actionable advice when relevant
+- You cannot diagnose, but can share educational mental health information
+- For greetings, be friendly but concise (1-2 sentences)
+- For crisis mentions (self-harm, suicide), immediately say: "If you're in crisis, please contact emergency services or text 16328 for immediate support."
+- You can use **bold** for emphasis and *italics* for key terms
+
+Be concise and varied in your responses.`;
+
 // ========== DATA ==========
 
 // Articles Data
@@ -88,33 +103,7 @@ const motivationCards = [
     "You have survived difficult days before, and you can do it again."
 ];
 
-// Chatbot Bot Responses
-const botResponses = {
-    'anxiety': 'Anxiety is a common experience that affects many people. Some effective techniques include deep breathing exercises, grounding techniques (5-4-3-2-1 method), and progressive muscle relaxation. Would you like me to guide you through a breathing exercise or connect you with professional resources?',
-    'panic': 'Panic attacks can feel overwhelming, but they are temporary. Try the 4-7-8 breathing technique: breathe in for 4, hold for 7, exhale for 8. Remember, you are safe and this feeling will pass. If panic attacks are frequent, please consider speaking with a mental health professional.',
-    'depression': 'Depression is a serious but treatable condition. It\'s important to know that you\'re not alone and help is available. Professional support from a therapist or psychiatrist can make a significant difference. Would you like information about finding mental health resources in your area?',
-    'stress': 'Chronic stress can impact both mental and physical health. Effective stress management includes regular exercise, adequate sleep, mindfulness practices, and setting healthy boundaries. What specific stressors are you dealing with? I can suggest targeted coping strategies.',
-    'sleep': 'Sleep difficulties often relate to mental health. Good sleep hygiene includes maintaining a consistent schedule, limiting screen time before bed, and creating a relaxing bedtime routine. If sleep problems persist, they may indicate underlying conditions that benefit from professional evaluation.',
-    'trauma': 'Trauma responses are normal reactions to abnormal experiences. Healing is possible with proper support. Evidence-based treatments like EMDR and trauma-focused therapy have helped many people. Please consider reaching out to a trauma-informed mental health professional.',
-    'bipolar': 'Bipolar disorder involves mood episodes that can significantly impact daily life. With proper treatment including medication and therapy, many people with bipolar disorder live fulfilling lives. It\'s important to work with a psychiatrist for accurate diagnosis and treatment planning.',
-    'ocd': 'OCD involves intrusive thoughts and compulsive behaviors. Cognitive Behavioral Therapy (CBT) and Exposure Response Prevention (ERP) are highly effective treatments. Remember that having intrusive thoughts doesn\'t define you - they are symptoms that can be managed with professional help.',
-    'ptsd': 'PTSD is a treatable condition that can develop after experiencing or witnessing trauma. Symptoms may include flashbacks, nightmares, and avoidance behaviors. Specialized therapies like EMDR and CPT have strong evidence for PTSD treatment. You deserve support in your healing journey.',
-    'adhd': 'ADHD affects attention, hyperactivity, and impulse control. It\'s a neurodevelopmental condition that can be effectively managed with proper treatment, which may include therapy, medication, and lifestyle strategies. A comprehensive evaluation by a qualified professional is the first step.',
-    'eating': 'Eating disorders are serious mental health conditions that require professional treatment. Recovery is possible with appropriate support including therapy, medical monitoring, and nutritional counseling. Please reach out to an eating disorder specialist or your healthcare provider.',
-    'self harm': 'If you\'re having thoughts of self-harm, please reach out for immediate support. Contact a crisis helpline, go to your nearest emergency room, or call emergency services. You deserve care and support. These feelings can be addressed with professional help.',
-    'suicide': 'If you\'re having thoughts of suicide, please reach out for immediate help: National Suicide Prevention Lifeline: 988 or text HOME to 741741. You are not alone, and there are people who want to help. Your life has value, and these feelings can change with proper support.',
-    'crisis': 'If you\'re in immediate crisis, please contact emergency services (911) or go to your nearest emergency room. For mental health crisis support: National Crisis Text Line: Text HOME to 741741. You don\'t have to face this alone.',
-    'therapy': 'Therapy can be incredibly beneficial for mental health. Different types include CBT (Cognitive Behavioral Therapy), DBT (Dialectical Behavior Therapy), and psychodynamic therapy. Finding the right therapist and approach may take time, but it\'s worth the investment in your wellbeing.',
-    'medication': 'Psychiatric medications can be helpful tools in mental health treatment when prescribed by qualified professionals. They work best when combined with therapy and lifestyle changes. It\'s important to work closely with a psychiatrist to find the right medication and dosage for your specific needs.',
-    'support': 'Having a strong support system is crucial for mental health. This can include family, friends, support groups, and mental health professionals. Don\'t hesitate to reach out - asking for help is a sign of strength, not weakness.',
-    'coping': 'Healthy coping strategies include mindfulness meditation, regular exercise, journaling, creative activities, and connecting with others. It\'s important to develop a toolkit of strategies that work for you. What activities help you feel more grounded?',
-    'help': 'I\'m here to provide information and support. You can explore our mental health articles, find qualified professionals in our directory, or continue our conversation. Remember, while I can offer general guidance, professional mental health support is important for personalized care.',
-    'hello': 'Hello! Welcome to MentIQ. I\'m here to provide mental health information and support. How can I assist you today? You can ask about specific conditions, coping strategies, or finding professional help.',
-    'hi': 'Hi there! I\'m glad you\'re here. Mental health is just as important as physical health, and seeking information shows strength. What would you like to know about or discuss today?',
-    'thanks': 'You\'re very welcome. Remember, taking care of your mental health is an ongoing journey, and it\'s okay to seek support along the way. I\'m here whenever you need information or guidance.',
-    'lonely': 'Feeling lonely is a common human experience, but persistent loneliness can impact mental health. Consider joining community groups, volunteering, or engaging in activities where you can meet like-minded people. If loneliness feels overwhelming, a therapist can help you develop connection strategies.',
-    'anger': 'Anger is a normal emotion, but when it feels uncontrollable, it can benefit from professional attention. Anger management techniques include identifying triggers, using relaxation techniques, and developing healthy expression methods. Would you like some specific anger management strategies?'
-};
+
 
 // ========== NAVIGATION FUNCTIONS ==========
 
@@ -548,72 +537,81 @@ async function sendChatMessage() {
     chatInput.value = '';
     chatMessages.scrollTop = chatMessages.scrollHeight;
 
-    // Show loading indicator
-    const loadingMsg = document.createElement('div');
-    loadingMsg.className = 'message bot-message';
-    loadingMsg.textContent = 'Thinking...';
-    loadingMsg.style.opacity = '0.6';
-    chatMessages.appendChild(loadingMsg);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    // Placeholder for streamed bot text
+    const botMsg = document.createElement('div');
+    botMsg.className = 'message bot-message';
+    botMsg.textContent = '';
+    let botBuffer = '';
 
     try {
-        const response = await fetch('/api/chatbot', {
+        const response = await fetch('https://api.cohere.ai/v1/chat', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${COHERE_API_KEY}`,
+                'Content-Type': 'application/json',
+                'X-Client-Name': 'MentIQ-Frontend'
             },
-            body: JSON.stringify({ message: message })
+            body: JSON.stringify({
+                message: message,
+                model: 'command-r-08-2024',
+                temperature: 0.8,
+                preamble: COHERE_SYSTEM_PREAMBLE,
+                stream: true
+            })
         });
 
-        const data = await response.json();
-        
-        // Remove loading message
-        loadingMsg.remove();
-        
-        if (data.success) {
-            const botMsg = document.createElement('div');
-            botMsg.className = 'message bot-message';
-            botMsg.textContent = data.response;
-            chatMessages.appendChild(botMsg);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        } else {
-            const errorMsg = document.createElement('div');
-            errorMsg.className = 'message bot-message';
-            errorMsg.textContent = 'Sorry, I encountered an error. Please try again.';
-            chatMessages.appendChild(errorMsg);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+        if (!response.ok || !response.body) {
+            throw new Error('Cohere response not OK');
         }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        // Attach bot message once streaming starts
+        chatMessages.appendChild(botMsg);
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed) continue;
+                try {
+                    const json = JSON.parse(trimmed);
+                    if (json.event_type === 'text-generation' && json.text) {
+                        botBuffer += json.text;
+                        botMsg.innerHTML = formatBotMessage(botBuffer);
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                        // Small delay to slow down streaming
+                        await new Promise(resolve => setTimeout(resolve, 80));
+                    }
+                } catch (err) {
+                    // ignore partial chunks
+                }
+            }
+        }
+
+        if (!botBuffer) {
+            botMsg.textContent = 'Sorry, I encountered an error. Please try again.';
+        }
+
+        chatMessages.scrollTop = chatMessages.scrollHeight;
     } catch (error) {
         console.error('Error sending message:', error);
-        loadingMsg.remove();
-        const errorMsg = document.createElement('div');
-        errorMsg.className = 'message bot-message';
-        errorMsg.textContent = 'Sorry, I encountered an error. Please try again.';
-        chatMessages.appendChild(errorMsg);
+        botMsg.textContent = 'Sorry, I encountered an error. Please try again.';
+        chatMessages.appendChild(botMsg);
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 }
 
-function getBotResponse(message) {
-    const lowerMessage = message.toLowerCase();
-
-    // Check for multiple keywords and prioritize crisis responses
-    const crisisKeywords = ['suicide', 'kill myself', 'end it all', 'self harm', 'hurt myself'];
-    for (let keyword of crisisKeywords) {
-        if (lowerMessage.includes(keyword)) {
-            return botResponses['suicide'] || botResponses['crisis'];
-        }
-    }
-
-    // Check for other keywords
-    for (let keyword in botResponses) {
-        if (lowerMessage.includes(keyword)) {
-            return botResponses[keyword];
-        }
-    }
-
-    // Default professional response
-    return 'Thank you for reaching out. Mental health is important, and I\'m here to help with information and resources. You can ask me about specific mental health conditions, coping strategies, or finding professional support. What would you like to know more about?';
+function formatBotMessage(text) {
+    // Convert markdown-style formatting to HTML
+    return text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+        .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italic
+        .replace(/\n/g, '<br>'); // Line breaks
 }
 
 // ========== FLASHCARD PAGE ==========
