@@ -1,0 +1,41 @@
+// MentIQ Website Lifecycle
+digraph {
+	rankdir=TB size=10
+	node [fontname=Helvetica shape=rect style=filled]
+	Start [label="User Visits Homepage" fillcolor="#E1F5FE"]
+	Auth [label="Login / Register" fillcolor="#E1F5FE" shape=diamond]
+	P_Dash [label="Patient Dashboard" fillcolor="#E8F5E9"]
+	Assess [label="Mental Health Assessment
+(Sleep, Anxiety, etc.)" fillcolor="#E8F5E9"]
+	Risk [label="AI Risk Model Output
+(At Risk / Low Risk)" fillcolor="#FFF9C4" shape=ellipse]
+	DocSearch [label="Find Doctors
+(Filter by Specialty)" fillcolor="#E8F5E9"]
+	Book [label="Book Appointment
+(Creates Pending Request)" fillcolor="#FFF9C4" shape=ellipse]
+	D_Dash [label="Doctor Dashboard" fillcolor="#F3E5F5"]
+	Manage [label="Manage Appointments
+(View Pending)" fillcolor="#F3E5F5"]
+	Action [label="Confirm / Delete" fillcolor="#F3E5F5" shape=diamond]
+	Consult [label="Consultation Complete" fillcolor="#F3E5F5"]
+	DB [label="SQLite Database
+(Users, Appts, History)" fillcolor="#EEEEEE" shape=cylinder]
+	Start -> Auth
+	Auth -> P_Dash [label="Patient Login"]
+	Auth -> D_Dash [label="Doctor Login"]
+	P_Dash -> Assess
+	Assess -> Risk [label="Submit Data"]
+	Risk -> DB [label="Save History"]
+	P_Dash -> DocSearch
+	DocSearch -> Book
+	Book -> DB [label="Insert Pending"]
+	D_Dash -> Manage
+	DB -> Manage [label="Fetch Requests"]
+	Manage -> Action
+	Action -> DB [label="Update Status
+(Confirmed)"]
+	Action -> Consult
+	Consult -> DB [label="Update Status
+(Completed)"]
+	Book -> Manage [label="Patient Request appears in Doctor View" style=dashed]
+}

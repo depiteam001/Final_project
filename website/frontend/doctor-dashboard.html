@@ -538,7 +538,7 @@
                 }
                 
                 currentDoctor = user;
-                document.getElementById('doctorName').textContent = `Dr. ${user.name}`;
+                document.getElementById('doctorName').textContent = user.name;
                 
                 // Verify with API
                 const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
@@ -549,7 +549,7 @@
                     const data = await response.json();
                     if (data.success) {
                         currentDoctor = data.user;
-                        document.getElementById('doctorName').textContent = `Dr. ${data.user.name}`;
+                        document.getElementById('doctorName').textContent = data.user.name;
                     }
                 }
                 
